@@ -62,8 +62,8 @@
     </div>
 
     <div class="brandmark">
-      <div class="eyebrow">Boarding Pass · Travelverse</div>
-      <h1>Riding into<br>your next trip.</h1>
+      <div class="eyebrow">Riding into your next trip</div>
+      <h1>TravelVerse</h1>
       <p>The crew's buckled in and the road's flying by. Sign in to keep the trip going.</p>
     </div>
 
@@ -212,6 +212,9 @@
       <div id="register-copy" style="display:none;">
         <h2 class="headline">Create your account</h2>
         <p class="sub">Join Travelverse and start planning your next trip.</p>
+        <div class="signup-progress">
+            <span id="step-indicator">Step 1 of 2</span>
+        </div>
       </div>
 
       <form id="login-form" class="active">
@@ -236,6 +239,7 @@
       </form>
 
       <form id="register-form">
+        <div id="signup-step1">
         <div class="field">
           <label for="full-name">Full name</label>
           <input type="text" id="first-name" class="watch-field" placeholder="Alex" autocomplete="given-name" required>
@@ -248,6 +252,15 @@
           <label for="username">username</label>
           <input type="text" id="username" class="watch-field" placeholder="AlexaRivera" autocomplete="username" required>
         </div>
+        <button
+          type="button"
+          id="next-btn"
+          class="submit">
+          Next →
+      </button>
+        </div>
+
+      <div id="signup-step2">
         <div class="field">
           <label for="reg-email">Email</label>
           <input type="email" id="reg-email" class="watch-field" placeholder="you@example.com" autocomplete="email" required>
@@ -259,21 +272,53 @@
             <button type="button" class="pw-toggle" data-target="reg-password">Show</button>
           </div>
         </div>
+        <button
+          type="button"
+          id="back-btn">
+          ← Back
+        </button>
+
         <button type="submit" class="submit">Create account</button>
+        </div> <!-- signup-step2 CLOSE -->
       </form>
 
-      <div class="divider">or continue with</div>
-      <div class="alt">
-        <button type="button">Google</button>
-        <button type="button">Apple</button>
+      <!-- LOGIN FOOTER -->
+      <div id="login-footer" >
+
+          <div class="divider">or continue with</div>
+
+          <div class="alt">
+              <button type="button">Google</button>
+              <button type="button">Apple</button>
+          </div>
+
+          <p class="switch-line">
+              New to Travelverse?
+              <button type="button" data-goto="register">
+                  Sign up
+              </button>
+          </p>
+
       </div>
 
-      <p class="switch-line" id="switch-login">
-        New to Travelverse? <button type="button" data-goto="register">Sign up</button>
-      </p>
-      <p class="switch-line" id="switch-register" style="display:none;">
-        Already have an account? <button type="button" data-goto="login">Log in</button>
-      </p>
+<!-- SIGNUP FOOTER -->
+<div id="signup-footer" style="display:none;">
+
+    <div class="divider">or continue with</div>
+
+    <div class="alt">
+        <button type="button">Google</button>
+        <button type="button">Apple</button>
+    </div>
+
+    <p class="switch-line">
+        Already have an account?
+        <button type="button" data-goto="login">
+            Log in
+        </button>
+    </p>
+
+</div>
     </div>
   </div>
 
@@ -290,15 +335,42 @@
   const switchLogin = document.getElementById('switch-login');
   const switchRegister = document.getElementById('switch-register');
 
+  
   function showTab(name){
-    tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
-    loginForm.classList.toggle('active', name==='login');
-    registerForm.classList.toggle('active', name==='register');
-    loginCopy.style.display = name==='login' ? 'block':'none';
-    registerCopy.style.display = name==='register' ? 'block':'none';
-    switchLogin.style.display = name==='login' ? 'none':'block';
-    switchRegister.style.display = name==='register' ? 'none':'block';
-  }
+
+    tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+
+    loginForm.classList.toggle("active", name === "login");
+    registerForm.classList.toggle("active", name === "register");
+
+    loginCopy.style.display = (name === "login") ? "block" : "none";
+    registerCopy.style.display = (name === "register") ? "block" : "none";
+
+    if(name === "login"){
+
+        loginFooter.style.display = "block";
+        signupFooter.style.display = "none";
+
+    }
+    else{
+
+        loginFooter.style.display = "none";
+        signupFooter.style.display = "none";
+
+        signupStep1.style.display = "block";
+        signupStep2.style.display = "none";
+
+        stepIndicator.textContent = "Step 1 of 2";
+
+        registerCopy.querySelector(".headline").textContent =
+            "Create your account";
+
+        registerCopy.querySelector(".sub").textContent =
+            "Join TravelVerse and start planning your next trip.";
+
+    }
+
+}
   tabs.forEach(t=> t.addEventListener('click', ()=> showTab(t.dataset.tab)));
   document.querySelectorAll('[data-goto]').forEach(b=>{
     b.addEventListener('click', ()=> showTab(b.dataset.goto));
@@ -428,7 +500,69 @@
       }
     });
   }
+  // ---------- Signup Step Navigation ----------
 
+const signupStep1 = document.getElementById("signup-step1");
+const signupStep2 = document.getElementById("signup-step2");
+
+const nextBtn = document.getElementById("next-btn");
+const backBtn = document.getElementById("back-btn");
+
+const signupFooter = document.getElementById("signup-footer");
+const stepIndicator = document.getElementById("step-indicator");
+const loginFooter = document.getElementById("login-footer");
+
+nextBtn.addEventListener("click", () => {
+
+    const firstName = document.getElementById("first-name").value.trim();
+    const lastName = document.getElementById("last-name").value.trim();
+    const username = document.getElementById("username").value.trim();
+
+    if(firstName === ""){
+        alert("Please enter your first name.");
+        return;
+    }
+
+    if(lastName === ""){
+        alert("Please enter your last name.");
+        return;
+    }
+
+    if(username === ""){
+        alert("Please enter a username.");
+        return;
+    }
+
+    signupStep1.style.display = "none";
+    signupStep2.style.display = "block";
+
+    signupFooter.style.display = "block";
+
+    stepIndicator.textContent = "Step 2 of 2";
+
+    registerCopy.querySelector(".headline").textContent = "Almost there!";
+    registerCopy.querySelector(".sub").textContent =
+        "Just your email and password left.";
+
+});
+
+
+backBtn.addEventListener("click", () => {
+
+    signupStep2.style.display = "none";
+    signupStep1.style.display = "block";
+
+    signupFooter.style.display = "none";
+
+    stepIndicator.textContent = "Step 1 of 2";
+
+    registerCopy.querySelector(".headline").textContent =
+        "Create your account";
+
+    registerCopy.querySelector(".sub").textContent =
+        "Join Travelverse and start planning your next trip.";
+
+});
   // ---------- Form submit (demo only) ----------
   [loginForm, registerForm].forEach(f=>{
     f.addEventListener('submit', (e)=>{
