@@ -105,11 +105,28 @@
   .btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 
   /* ---------- HERO ---------- */
+  .page-video{
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+  }
+  .bg-video{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .bg-video-overlay{
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(7,13,28,0.55) 0%, rgba(7,13,28,0.72) 35%, rgba(7,13,28,0.85) 65%, rgba(7,13,28,0.94) 100%);
+  }
   .hero{
     position: relative;
     padding: 190px 0 140px;
     overflow: hidden;
-    background: var(--bg-deep);
   }
   .hero-horizon{
     position: absolute;
@@ -118,21 +135,6 @@
     background: linear-gradient(to top, rgba(255,122,82,0.16), rgba(255,201,120,0.06) 45%, rgba(10,22,40,0) 100%);
     z-index: 0;
     pointer-events: none;
-  }
-  .hero-video{
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 0;
-  }
-  .hero-video-overlay{
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    background:
-      linear-gradient(180deg, rgba(7,13,28,0.55) 0%, rgba(7,13,28,0.72) 55%, rgba(7,13,28,0.92) 100%);
   }
   .hero-glow{
     position:absolute;
@@ -455,6 +457,13 @@
 </head>
 <body>
 
+<div class="page-video">
+  <video class="bg-video" autoplay muted loop playsinline poster="">
+    <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4" type="video/mp4">
+  </video>
+  <div class="bg-video-overlay"></div>
+</div>
+
 <nav>
   <div class="wrap nav-inner">
     <div class="logo">
@@ -483,10 +492,6 @@
 </nav>
 
 <section class="hero">
-  <video class="hero-video" autoplay muted loop playsinline poster="">
-    <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4" type="video/mp4">
-  </video>
-  <div class="hero-video-overlay"></div>
   <div class="hero-horizon"></div>
   <div class="hero-glow"></div>
   <div class="wrap hero-content">
