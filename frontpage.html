@@ -120,21 +120,12 @@
   .bg-video-overlay{
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(180deg, rgba(7,13,28,0.55) 0%, rgba(7,13,28,0.72) 35%, rgba(7,13,28,0.85) 65%, rgba(7,13,28,0.94) 100%);
+    background: rgba(7,13,28,0.62);
   }
   .hero{
     position: relative;
     padding: 190px 0 140px;
     overflow: hidden;
-  }
-  .hero-horizon{
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    height: 60%;
-    background: linear-gradient(to top, rgba(255,122,82,0.16), rgba(255,201,120,0.06) 45%, rgba(10,22,40,0) 100%);
-    z-index: 0;
-    pointer-events: none;
   }
   .hero-glow{
     position:absolute;
@@ -492,7 +483,6 @@
 </nav>
 
 <section class="hero">
-  <div class="hero-horizon"></div>
   <div class="hero-glow"></div>
   <div class="wrap hero-content">
     <span class="eyebrow"><span class="pulse-dot"></span>Now matching across 40+ countries</span>
