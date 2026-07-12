@@ -1,7 +1,9 @@
 import {
     auth,
     createUserWithEmailAndPassword,
-    signInWithEmailAndPassword
+    signInWithEmailAndPassword,
+    GoogleAuthProvider,
+    signInWithPopup
 } from "./firebase.js";
 
 
@@ -32,7 +34,7 @@ function showToast(type, title, message) {
     }, 4000);
 }
 
-
+window.showToast = showToast;
 document
     .getElementById("toast-close")
     .addEventListener("click", () => {
@@ -333,6 +335,172 @@ loginForm.addEventListener(
 
     }
 );
+
+
+
+
+// ===============================
+// GOOGLE AUTH
+// ===============================
+
+const googleButtons = document.querySelectorAll(".google-auth-btn");
+
+googleButtons.forEach((button) => {
+
+    button.addEventListener("click", async () => {
+
+        try {
+
+            const provider = new GoogleAuthProvider();
+
+            const result = await signInWithPopup(
+                auth,
+                provider
+            );
+
+            const firebaseUser = result.user;
+
+            console.log(
+                "Google Firebase User:",
+                firebaseUser
+            );
+
+            // CHECK USER IN BACKEND
+
+            let response = await fetch(
+                `http://127.0.0.1:8000/login/${firebaseUser.uid}`
+            );
+
+            let backendData = await response.json();
+
+
+            // USER DOES NOT EXIST IN MONGODB
+
+            if (response.status === 404) {
+
+                const fullName =
+                    firebaseUser.displayName || "TravelVerse User";
+
+                const nameParts = fullName.split(" ");
+
+                const firstName =
+                    nameParts[0] || "TravelVerse";
+
+                const lastName =
+                    nameParts.slice(1).join(" ") || "User";
+
+                const username =
+                    firebaseUser.email
+                        .split("@")[0];
+
+
+                response = await fetch(
+                    "http://127.0.0.1:8000/register",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            first_name: firstName,
+                            last_name: lastName,
+                            username: username,
+                            email: firebaseUser.email,
+                            firebase_uid: firebaseUser.uid
+                        })
+                    }
+                );
+
+                backendData = await response.json();
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        backendData.detail ||
+                        "Google account creation failed"
+                    );
+
+                }
+
+                localStorage.setItem(
+                    "travelverse_user",
+                    JSON.stringify(backendData.user)
+                );
+
+                const successModal =
+                    document.getElementById(
+                        "account-success-modal"
+                    );
+
+                successModal.classList.add("show");
+
+                return;
+            }
+
+
+            // EXISTING GOOGLE USER
+
+            if (!response.ok) {
+
+                throw new Error(
+                    backendData.detail ||
+                    "Google login failed"
+                );
+
+            }
+
+
+            localStorage.setItem(
+                "travelverse_user",
+                JSON.stringify(backendData.user)
+            );
+
+
+            showToast(
+                "success",
+                "Welcome back!",
+                "Google login successful. Your next adventure awaits."
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Google Auth Error:",
+                error
+            );
+
+
+            if (
+                error.code ===
+                "auth/popup-closed-by-user"
+            ) {
+
+                showToast(
+                    "error",
+                    "Sign in cancelled",
+                    "Google sign in was cancelled."
+                );
+
+            }
+
+            else {
+
+                showToast(
+                    "error",
+                    "Google sign in failed",
+                    error.message
+                );
+
+            }
+
+        }
+
+    });
+
+});
 
 
 // ===============================

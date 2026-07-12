@@ -288,7 +288,7 @@
           <div class="divider">or continue with</div>
 
           <div class="alt">
-              <button type="button">Google</button>
+              <button type="button" class="google-auth-btn">Google</button>
               <button type="button">Apple</button>
           </div>
 
@@ -307,7 +307,7 @@
     <div class="divider">or continue with</div>
 
     <div class="alt">
-        <button type="button">Google</button>
+        <button type="button" class="google-auth-btn">Google</button>
         <button type="button">Apple</button>
     </div>
 
@@ -524,20 +524,31 @@ nextBtn.addEventListener("click", () => {
     const username = document.getElementById("username").value.trim();
 
     if(firstName === ""){
-        alert("Please enter your first name.");
-        return;
-    }
+    showToast(
+        "error",
+        "First name missing",
+        "Please enter your first name."
+    );
+    return;
+}
 
-    if(lastName === ""){
-        alert("Please enter your last name.");
-        return;
-    }
+if(lastName === ""){
+    showToast(
+        "error",
+        "Last name missing",
+        "Please enter your last name."
+    );
+    return;
+}
 
-    if(username === ""){
-        alert("Please enter a username.");
-        return;
-    }
-
+if(username === ""){
+    showToast(
+        "error",
+        "Username missing",
+        "Please enter a username."
+    );
+    return;
+}
     signupStep1.style.display = "none";
     signupStep2.style.display = "block";
 
