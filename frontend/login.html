@@ -372,6 +372,11 @@
 
 }
   tabs.forEach(t=> t.addEventListener('click', ()=> showTab(t.dataset.tab)));
+
+  const params = new URLSearchParams(window.location.search);
+const initialTab = params.get('tab') === 'register' ? 'register' : 'login';
+showTab(initialTab);
+
   document.querySelectorAll('[data-goto]').forEach(b=>{
     b.addEventListener('click', ()=> showTab(b.dataset.goto));
   });
