@@ -20,6 +20,27 @@ registerForm.addEventListener("submit", async (e) => {
         email,
         password
     );
+const firebaseUser = userCredential.user;
+
+const response = await fetch("http://127.0.0.1:8000/register", {
+    method: "POST",
+
+    headers: {
+        "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        username: username,
+        email: email,
+        firebase_uid: firebaseUser.uid
+    })
+});
+
+const backendData = await response.json();
+
+console.log("Backend Response:", backendData);
 
     console.log("User Created Successfully ✅");
 
