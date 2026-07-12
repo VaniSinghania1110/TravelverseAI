@@ -417,3 +417,214 @@ margin-top:0;
 .field{
     margin-bottom:18px;
 }
+/* =========================
+   TRAVELVERSE TOAST
+========================= */
+
+.travel-toast {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+
+    width: 360px;
+    padding: 18px 20px;
+
+    background: #fffaf3;
+    border: 1px solid rgba(230, 82, 92, 0.2);
+    border-radius: 18px;
+
+    box-shadow: 0 18px 45px rgba(25, 40, 65, 0.18);
+
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    z-index: 99999;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transform: translateY(-20px);
+
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease,
+        visibility 0.3s;
+}
+
+.travel-toast.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.toast-icon {
+    width: 45px;
+    height: 45px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+
+    background: linear-gradient(135deg, #f58245, #df5260);
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-content h4 {
+    margin: 0 0 4px;
+
+    color: #172b3a;
+    font-size: 16px;
+}
+
+.toast-content p {
+    margin: 0;
+
+    color: #69757f;
+    font-size: 13px;
+}
+
+#toast-close {
+    border: none;
+    background: transparent;
+
+    color: #8b949c;
+
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.travel-toast.error .toast-icon {
+    background: linear-gradient(135deg, #ff6b6b, #d9364e);
+}
+
+.travel-toast.success .toast-icon {
+    background: linear-gradient(135deg, #f58245, #df5260);
+}
+/* =========================
+   ACCOUNT SUCCESS MODAL
+========================= */
+
+.success-modal-overlay {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(18, 38, 52, 0.48);
+    backdrop-filter: blur(8px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 100000;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition: 0.3s ease;
+}
+
+.success-modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.success-modal {
+    width: 440px;
+    max-width: 90%;
+
+    padding: 45px 40px;
+
+    background: #fffaf3;
+
+    border-radius: 28px;
+
+    text-align: center;
+
+    box-shadow: 0 30px 80px rgba(20, 40, 55, 0.3);
+
+    transform: translateY(30px) scale(0.9);
+
+    transition: 0.35s ease;
+}
+
+.success-modal-overlay.show .success-modal {
+    transform: translateY(0) scale(1);
+}
+
+.success-modal-icon {
+    width: 82px;
+    height: 82px;
+
+    margin: 0 auto 24px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: linear-gradient(135deg, #f58245, #df5260);
+
+    color: white;
+
+    font-size: 38px;
+    font-weight: 700;
+
+    box-shadow: 0 15px 35px rgba(223, 82, 96, 0.35);
+}
+
+.success-modal h2 {
+    margin: 0 0 14px;
+
+    color: #172b3a;
+
+    font-size: 30px;
+}
+
+.success-modal p {
+    margin: 0 auto 30px;
+
+    color: #69757f;
+
+    font-size: 15px;
+    line-height: 1.7;
+
+    max-width: 340px;
+}
+
+#success-modal-btn {
+    border: none;
+
+    padding: 14px 30px;
+
+    border-radius: 14px;
+
+    background: linear-gradient(135deg, #f58245, #df5260);
+
+    color: white;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: 0 12px 28px rgba(223, 82, 96, 0.3);
+
+    transition: 0.25s ease;
+}
+
+#success-modal-btn:hover {
+    transform: translateY(-2px);
+}

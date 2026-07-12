@@ -569,17 +569,40 @@ backBtn.addEventListener("click", () => {
 
 });
   // ---------- Form submit (demo only) ----------
-  [loginForm, registerForm].forEach(f=>{
-    f.addEventListener('submit', (e)=>{
-      e.preventDefault();
-      if(!f.checkValidity()){
-        triggerShake();
-        return;
-      }
-      alert('Demo only — wire this up to your auth backend.');
-    });
-  });
+  
 </script>
 <script type="module" src="js/auth.js"></script>
+<div id="travel-toast" class="travel-toast">
+    <div class="toast-icon" id="toast-icon">✓</div>
+
+    <div class="toast-content">
+        <h4 id="toast-title">Success</h4>
+        <p id="toast-message">Operation successful.</p>
+    </div>
+
+    <button type="button" id="toast-close">×</button>
+</div>
+<!-- ACCOUNT CREATED SUCCESS MODAL -->
+
+<div id="account-success-modal" class="success-modal-overlay">
+
+    <div class="success-modal">
+
+        <div class="success-modal-icon">✓</div>
+
+        <h2>Adventure unlocked!</h2>
+
+        <p>
+            Your TravelVerse account is ready.
+            Pack your curiosity — your next journey starts here.
+        </p>
+
+        <button type="button" id="success-modal-btn">
+            Start exploring →
+        </button>
+
+    </div>
+
+</div>
 </body>
 </html>
