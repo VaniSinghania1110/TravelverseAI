@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TravelVerse — Direct Buddy Chat</title>
+<script>
+  (function(){
+    var activeEmail = (localStorage.getItem('travelverse_current_user_email') || '').trim().toLowerCase();
+    var isAuth = localStorage.getItem('travelverse_session_active') === 'true';
+    if (!isAuth || !activeEmail || activeEmail === 'null' || activeEmail === 'undefined') {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-night: #0B2027;
+    --bg-night-2: #123A42;
+    --card-cream: #FFFDF8;
+    --ink: #17242A;
+    --ink-soft: #55625F;
+    --accent-sunset: #E8874A;
+    --accent-coral: #D6555A;
+    --gold: #C9A227;
+    --star: #FDEBD3;
+    --line: rgba(23,36,42,0.12);
+    --page-bg: #F4EEE2;
+    --green-badge: #2E7D32;
+  }
+  *{ box-sizing:border-box; }
+  html, body{ height:100%; margin:0; overflow:hidden; }
+  body{
+    font-family:'Work Sans', sans-serif;
+    color: var(--ink);
+    background: var(--page-bg);
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- NAV ---------- */
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 16px 5vw;
+    background: var(--bg-night);
+    color: var(--star);
+    flex-shrink:0; z-index:10;
+  }
+  .logo{
+    font-family:'Fraunces', serif; font-weight:700; font-size:20px;
+    display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--star);
+  }
+  .logo-dot{ width:8px; height:8px; border-radius:50%; background: var(--gold); }
+  .nav-links{ display:flex; gap:30px; font-size:14px; font-weight:500; }
+  .nav-links a{ color: rgba(253,235,211,0.75); text-decoration:none; transition: color .2s ease; }
+  .nav-links a.active{ color: var(--star); border-bottom:2px solid var(--gold); padding-bottom:4px; }
+  .nav-links a:hover{ color: var(--star); }
+  .nav-right{ display:flex; align-items:center; gap:16px; }
+  .user-chip{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; }
+  .user-avatar{
+    position:relative;
+    width:36px; height:36px; border-radius:50%;
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-weight:700; font-size:14px; color:#fff;
+    cursor:pointer; overflow:hidden; border:none; padding:0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .user-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .account-menu-wrap{ position:relative; }
+  .account-menu-trigger{
+    display:flex; align-items:center; gap:6px;
+    background:none; border:none; color: var(--star);
+    font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+    padding:6px 4px;
+  }
+  .account-menu{
+    position:absolute; top: calc(100% + 8px); right:0;
+    background: var(--card-cream); border-radius: 12px;
+    box-shadow: 0 16px 34px rgba(0,0,0,0.22);
+    min-width: 160px; padding: 6px;
+    opacity:0; visibility:hidden; transform: translateY(-6px);
+    transition: opacity .16s ease, transform .16s ease, visibility .16s ease;
+    z-index: 50;
+  }
+  .account-menu.show{ opacity:1; visibility:visible; transform: translateY(0); }
+  .account-menu-item{
+    display:block; width:100%; text-align:left;
+    background:none; border:none; border-radius:8px;
+    padding:9px 12px; font-family:inherit; font-size:13.5px; font-weight:600;
+    color: var(--ink); cursor:pointer; transition: background .15s ease;
+  }
+  .account-menu-item:hover{ background: rgba(23,36,42,0.06); }
+  .account-menu-item.danger{ color: var(--accent-coral); }
+
+  /* ---------- MAIN CHAT CONTAINER ---------- */
+  .chat-layout{
+    flex:1; display:flex; overflow:hidden; position:relative;
+  }
+
+  /* SIDEBAR */
+  .chat-sidebar{
+    width:340px; background: #fff; border-right:1px solid var(--line);
+    display:flex; flex-direction:column; flex-shrink:0;
+  }
+  .sidebar-header{
+    padding:18px 20px; border-bottom:1px solid var(--line);
+    background: var(--card-cream);
+  }
+  .sidebar-header h2{
+    font-family:'Fraunces', serif; font-size:20px; margin:0 0 10px; color:var(--ink);
+  }
+  .search-input-wrap{ position:relative; }
+  .search-input-wrap input{
+    width:100%; padding:9px 14px 9px 36px; border:1.5px solid var(--line);
+    border-radius:20px; font-family:inherit; font-size:13.5px; outline:none; background:#fff;
+  }
+  .search-input-wrap input:focus{ border-color: var(--accent-sunset); }
+  .search-icon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:.5; font-size:14px; }
+
+  .buddies-list{
+    flex:1; overflow-y:auto; padding:10px 0;
+  }
+  .buddy-item{
+    display:flex; align-items:center; gap:12px; padding:14px 20px;
+    cursor:pointer; transition: background .15s ease; border-bottom:1px solid rgba(23,36,42,0.04);
+  }
+  .buddy-item:hover{ background: rgba(23,36,42,0.03); }
+  .buddy-item.active{
+    background: rgba(232,135,74,0.12); border-left:4px solid var(--accent-sunset);
+  }
+  .buddy-avatar-wrap{
+    width:44px; height:44px; border-radius:50%;
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; font-family:'Fraunces', serif; font-weight:700; font-size:17px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    overflow:hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  .buddy-avatar-wrap img{ width:100%; height:100%; object-fit:cover; }
+  .buddy-info{ flex:1; min-width:0; }
+  .buddy-name-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:2px; }
+  .buddy-name{ font-family:'Fraunces', serif; font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .buddy-dest{ font-size:12px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* MAIN CHAT PANE */
+  .chat-main{
+    flex:1; display:flex; flex-direction:column; background: var(--page-bg); overflow:hidden;
+  }
+  .chat-header{
+    padding:16px 28px; background: var(--bg-night); color: var(--star);
+    display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  }
+  .chat-header-user{ display:flex; align-items:center; gap:14px; }
+  .header-avatar{
+    width:44px; height:44px; border-radius:50%;
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; font-family:'Fraunces', serif; font-weight:700; font-size:18px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden;
+  }
+  .header-avatar img{ width:100%; height:100%; object-fit:cover; }
+  .header-name{ font-family:'Fraunces', serif; font-size:18px; font-weight:700; color:var(--star); margin:0 0 2px; }
+  .header-sub{ font-size:12.5px; color: rgba(253,235,211,0.75); }
+
+  .chat-thread{
+    flex:1; padding:24px 32px; overflow-y:auto; display:flex; flex-direction:column; gap:14px;
+  }
+
+  .message-row{ display:flex; flex-direction:column; }
+  .message-row.me{ align-items:flex-end; }
+  .message-row.buddy{ align-items:flex-start; }
+
+  .chat-bubble{
+    max-width:72%; padding:13px 18px; border-radius:20px; font-size:14.5px; line-height:1.5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  .message-row.me .chat-bubble{
+    background: linear-gradient(135deg, var(--bg-night), var(--bg-night-2));
+    color: var(--star); border-bottom-right-radius: 4px;
+  }
+  .message-row.buddy .chat-bubble{
+    background: #fff; color: var(--ink); border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+  }
+  .chat-time{ font-size:11px; color: var(--ink-soft); margin-top:4px; padding:0 6px; }
+
+  /* INPUT BAR */
+  .chat-footer{
+    padding:16px 28px; background: #fff; border-top:1px solid var(--line);
+    display:flex; gap:12px; align-items:center; flex-shrink:0;
+  }
+  .chat-footer input{
+    flex:1; padding:13px 20px; border:1.5px solid var(--line); border-radius:30px;
+    font-family:inherit; font-size:14.5px; outline:none; background: var(--card-cream);
+    transition: border-color .18s ease;
+  }
+  .chat-footer input:focus{ border-color: var(--accent-sunset); background:#fff; }
+  .btn-send{
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; border:none; padding:13px 26px; border-radius:30px;
+    font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;
+    box-shadow:0 6px 18px rgba(232,135,74,0.3); transition: transform .15s ease; flex-shrink:0;
+  }
+  .btn-send:hover{ transform: translateY(-1px); }
+
+  /* EMPTY STATE */
+  .empty-chat-pane{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:40px; text-align:center; background: var(--page-bg);
+  }
+  .empty-chat-icon{ font-size:52px; margin-bottom:14px; }
+  .empty-chat-title{ font-family:'Fraunces', serif; font-size:24px; margin:0 0 8px; color:var(--ink); }
+  .empty-chat-sub{ font-size:14px; color:var(--ink-soft); max-width:400px; margin:0 0 20px; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="dashboard.html" class="logo"><span class="logo-dot"></span> TravelVerse</a>
+  <div class="nav-links">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="companions.html">Find companions</a>
+    <a href="connections.html">Connections</a>
+    <a href="chat.html" class="active">Chat</a>
+    <a href="agent.html">Agents</a>
+    <a href="assistant.html">Assistant</a>
+  </div>
+  <div class="nav-right">
+    <div class="user-chip">
+      <button type="button" class="user-avatar" id="user-avatar">
+        <span id="avatar-initial">T</span>
+      </button>
+      <div class="account-menu-wrap">
+        <button type="button" class="account-menu-trigger" id="account-menu-trigger">
+          <span id="user-name-chip">Traveller</span>
+          <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="account-menu" id="account-menu">
+          <button type="button" id="logout-btn" class="account-menu-item danger">Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN CHAT LAYOUT -->
+<div class="chat-layout">
+
+  <!-- SIDEBAR: BUDDY LIST -->
+  <div class="chat-sidebar">
+    <div class="sidebar-header">
+      <h2>Travel Buddy Chats</h2>
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="buddy-search-input" placeholder="Filter buddies or trips...">
+      </div>
+    </div>
+    <div class="buddies-list" id="buddies-list-container">
+      <!-- Populated dynamically via JS -->
+    </div>
+  </div>
+
+  <!-- MAIN CHAT PANE -->
+  <div class="chat-main" id="chat-main-pane">
+    <!-- Rendered dynamically -->
+  </div>
+
+</div>
+
+<script>
+  const API_BASE = "http://127.0.0.1:8000";
+
+  // Identity
+  function getValidUserString(val) {
+    if (!val) return '';
+    const s = String(val).trim();
+    if (s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'traveller') return '';
+    return s;
+  }
+
+  function getCurrentUser() {
+    const email = getValidUserString(localStorage.getItem('travelverse_current_user_email')).toLowerCase();
+    let name = getValidUserString(localStorage.getItem('travelverse_user_name'));
+    let username = getValidUserString(localStorage.getItem('travelverse_username'));
+    let pic = localStorage.getItem('travelverse_profile_pic') || '';
+
+    try {
+      const accounts = JSON.parse(localStorage.getItem('travelverse_accounts') || '[]');
+      const userObj = accounts.find(a => a && a.email && getValidUserString(a.email).toLowerCase() === email);
+      if (userObj) {
+        if (!name) name = getValidUserString(userObj.firstName ? (userObj.firstName + (userObj.lastName ? ' ' + userObj.lastName : '')) : (userObj.first_name || userObj.name));
+        if (!username) username = getValidUserString(userObj.username);
+        if (!pic) pic = userObj.profilePic || userObj.profile_pic || '';
+      }
+    } catch(e) {}
+
+    const display = username || name || (email ? email.split('@')[0] : 'Traveller');
+    return { email, name: name || display, username: username || display, pic, display };
+  }
+
+  function renderUserHeader() {
+    const user = getCurrentUser();
+    const finalName = user.display;
+    const finalInitial = finalName.charAt(0).toUpperCase();
+
+    const nameChipEl = document.getElementById('user-name-chip');
+    const avatarBtnEl = document.getElementById('user-avatar');
+    if (nameChipEl) nameChipEl.textContent = finalName;
+    if (avatarBtnEl) {
+      if (user.pic && user.pic.length > 10) {
+        avatarBtnEl.innerHTML = `<img src="${user.pic}" alt="Profile picture">`;
+      } else {
+        avatarBtnEl.innerHTML = `<span id="avatar-initial">${finalInitial}</span>`;
+      }
+    }
+  }
+
+  // Account Menu
+  document.getElementById('account-menu-trigger')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('account-menu')?.classList.toggle('show');
+  });
+  document.addEventListener('click', () => {
+    document.getElementById('account-menu')?.classList.remove('show');
+  });
+  document.getElementById('logout-btn')?.addEventListener('click', () => {
+    localStorage.removeItem('travelverse_session_active');
+    window.location.href = 'login.html';
+  });
+
+  // ==========================================
+  // CHAT SYSTEM STATE & MONGO SYNC
+  // ==========================================
+  let travelBuddies = [];
+  let activeBuddy = null;
+  let chatPollTimer = null;
+
+  function getLocalConnections() {
+    try {
+      return JSON.parse(localStorage.getItem('travelverse_connections') || '[]');
+    } catch(e) { return []; }
+  }
+
+  async function loadBuddiesFromBackendAndLocal() {
+    const user = getCurrentUser();
+    if (!user.email) return;
+
+    let buddiesList = [];
+    const myEmail = user.email.toLowerCase();
+    const myUser = user.username.toLowerCase();
+
+    // 1. Backend sync
+    try {
+      const res = await fetch(`${API_BASE}/user-connections/${encodeURIComponent(user.email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success' && Array.isArray(data.accepted_buddies)) {
+          data.accepted_buddies.forEach(ab => {
+            const bEmail = (ab.buddy_email || '').toLowerCase().trim();
+            const bName = ab.buddy_name || ab.buddy_username || bEmail;
+            const bPic = ab.buddy_pic || '';
+            const bDest = ab.destination || 'Worldwide Explorer';
+            if (bEmail && !buddiesList.some(b => b.email === bEmail)) {
+              buddiesList.push({
+                email: bEmail,
+                name: bName,
+                username: ab.buddy_username || '',
+                pic: bPic,
+                destination: bDest
+              });
+            }
+          });
+        }
+      }
+    } catch(e) {
+      console.log("Backend offline, loading local connections.");
+    }
+
+    // 2. Local Storage fallback / merge
+    const connections = getLocalConnections();
+    connections.forEach(c => {
+      if ((c.status || 'pending').toLowerCase() === 'accepted') {
+        const s = (c.sender_email || '').toLowerCase().trim();
+        const r = (c.receiver_email || '').toLowerCase().trim();
+        const isMeSender = s === myEmail || (myUser && s === myUser);
+        const buddyEmail = isMeSender ? r : s;
+        const buddyName = isMeSender ? (c.receiver_name || r) : (c.sender_name || s);
+        const buddyPic = isMeSender ? c.receiver_pic : c.sender_pic;
+        const buddyUsername = isMeSender ? c.receiver_username : c.sender_username;
+        const dest = c.destination || 'Worldwide Explorer';
+
+        if (buddyEmail && !buddiesList.some(b => b.email === buddyEmail)) {
+          buddiesList.push({
+            email: buddyEmail,
+            name: buddyName,
+            username: buddyUsername || '',
+            pic: buddyPic || '',
+            destination: dest
+          });
+        }
+      }
+    });
+
+    travelBuddies = buddiesList;
+    renderSidebarBuddies();
+
+    // Check URL search param e.g. ?buddy=alex12 or ?buddy=alex@example.com
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramBuddy = urlParams.get('buddy') || urlParams.get('email') || urlParams.get('chat_buddy') || '';
+
+    if (paramBuddy) {
+      const matched = travelBuddies.find(b => 
+        b.email.toLowerCase() === paramBuddy.toLowerCase() || 
+        (b.username && b.username.toLowerCase() === paramBuddy.toLowerCase()) ||
+        (b.name && b.name.toLowerCase().includes(paramBuddy.toLowerCase()))
+      );
+      if (matched) {
+        selectBuddy(matched);
+        return;
+      }
+    }
+
+    if (!activeBuddy && travelBuddies.length > 0) {
+      selectBuddy(travelBuddies[0]);
+    } else if (travelBuddies.length === 0) {
+      renderEmptyChatState();
+    }
+  }
+
+  function renderSidebarBuddies() {
+    const container = document.getElementById('buddies-list-container');
+    if (!container) return;
+
+    const query = (document.getElementById('buddy-search-input')?.value || '').trim().toLowerCase();
+    const filtered = travelBuddies.filter(b => 
+      !query || 
+      b.name.toLowerCase().includes(query) || 
+      b.email.toLowerCase().includes(query) || 
+      (b.username && b.username.toLowerCase().includes(query)) ||
+      (b.destination && b.destination.toLowerCase().includes(query))
+    );
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="padding:30px 16px; text-align:center; color:var(--ink-soft); font-size:13.5px;">
+          ${query ? 'No matching buddies found.' : 'No accepted travel buddies yet. Connect with travellers to start chatting!'}
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtered.map(b => {
+      const isActive = activeBuddy && activeBuddy.email === b.email;
+      const initial = (b.name || 'T').charAt(0).toUpperCase();
+      const avatarHtml = b.pic ? `<img src="${b.pic}" alt="${b.name}">` : initial;
+
+      return `
+        <div class="buddy-item ${isActive ? 'active' : ''}" onclick="switchBuddy('${b.email}')">
+          <div class="buddy-avatar-wrap">${avatarHtml}</div>
+          <div class="buddy-info">
+            <div class="buddy-name-row">
+              <span class="buddy-name">${b.name}</span>
+            </div>
+            <div class="buddy-dest">📍 ${b.destination || 'Worldwide Explorer'}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.switchBuddy = function(email) {
+    const b = travelBuddies.find(item => item.email === email);
+    if (b) selectBuddy(b);
+  };
+
+  function selectBuddy(buddyObj) {
+    activeBuddy = buddyObj;
+    renderSidebarBuddies();
+    renderChatPane();
+
+    fetchAndRenderMessages();
+    clearInterval(chatPollTimer);
+    chatPollTimer = setInterval(fetchAndRenderMessages, 2000);
+  }
+
+  function renderEmptyChatState() {
+    const mainPane = document.getElementById('chat-main-pane');
+    if (!mainPane) return;
+
+    mainPane.innerHTML = `
+      <div class="empty-chat-pane">
+        <div class="empty-chat-icon">💬</div>
+        <h2 class="empty-chat-title">Direct Travel Buddy Messaging</h2>
+        <p class="empty-chat-sub">Connect with verified travellers on TravelVerse. Once your connection request is accepted, your 1-on-1 chat room will activate here!</p>
+        <a href="companions.html" style="background:linear-gradient(135deg, var(--accent-sunset), var(--accent-coral)); color:#fff; text-decoration:none; padding:12px 24px; border-radius:30px; font-weight:700; font-size:14px; box-shadow:0 6px 18px rgba(232,135,74,0.3);">Find Companions ✈️</a>
+      </div>
+    `;
+  }
+
+  function renderChatPane() {
+    const mainPane = document.getElementById('chat-main-pane');
+    if (!mainPane || !activeBuddy) return;
+
+    const initial = (activeBuddy.name || 'T').charAt(0).toUpperCase();
+    const avatarHtml = activeBuddy.pic ? `<img src="${activeBuddy.pic}" alt="${activeBuddy.name}">` : initial;
+
+    mainPane.innerHTML = `
+      <div class="chat-header">
+        <div class="chat-header-user">
+          <div class="header-avatar">${avatarHtml}</div>
+          <div>
+            <div class="header-name">${activeBuddy.name} <span style="color:#1DA1F2; font-size:13px;" title="Verified Buddy">✓</span></div>
+            <div class="header-sub">📍 ${activeBuddy.destination || 'Worldwide Explorer'} • Confirmed Travel Buddy</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-thread" id="chat-thread-container">
+        <div style="text-align:center; padding:30px 10px; color:var(--ink-soft); font-size:13.5px;">Loading chat messages...</div>
+      </div>
+
+      <div class="chat-footer">
+        <input type="text" id="chat-text-input" placeholder="Type a message to plan your trip..." autocomplete="off">
+        <button type="button" class="btn-send" id="chat-send-btn" onclick="sendMessage()">Send ✈️</button>
+      </div>
+    `;
+
+    document.getElementById('chat-text-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    setTimeout(() => {
+      document.getElementById('chat-text-input')?.focus();
+    }, 100);
+  }
+
+  async function fetchAndRenderMessages() {
+    if (!activeBuddy) return;
+    const user = getCurrentUser();
+    if (!user.email) return;
+
+    const container = document.getElementById('chat-thread-container');
+    if (!container) return;
+
+    let messages = [];
+    try {
+      const res = await fetch(`${API_BASE}/get-buddy-messages/${encodeURIComponent(user.email)}/${encodeURIComponent(activeBuddy.email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        messages = data.messages || [];
+      }
+    } catch(e) {
+      try {
+        const localKey = `travelverse_chat_${user.email.toLowerCase()}_${activeBuddy.email.toLowerCase()}`;
+        messages = JSON.parse(localStorage.getItem(localKey) || '[]');
+      } catch(err) { messages = []; }
+    }
+
+    if (messages.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px 10px; color:var(--ink-soft);">
+          <div style="font-size:38px; margin-bottom:8px;">🗺️</div>
+          <div style="font-weight:700; font-size:16px; color:var(--ink); margin-bottom:4px;">Start planning your trip with ${activeBuddy.name}!</div>
+          <p style="font-size:13.5px; margin:0; line-height:1.5;">Send a message to discuss itinerary details, flights, dates, or travel budget together.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const myEmail = user.email.toLowerCase();
+    const myUser = user.username.toLowerCase();
+    const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 90;
+
+    container.innerHTML = messages.map(m => {
+      const s = (m.sender_email || '').toLowerCase().trim();
+      const isMe = s === myEmail || (myUser && s === myUser);
+      const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just now';
+
+      return `
+        <div class="message-row ${isMe ? 'me' : 'buddy'}">
+          <div class="chat-bubble">${m.message_text}</div>
+          <div class="chat-time">${timeStr}</div>
+        </div>
+      `;
+    }).join('');
+
+    if (isAtBottom) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  window.sendMessage = async function() {
+    const input = document.getElementById('chat-text-input');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text || !activeBuddy) return;
+
+    const user = getCurrentUser();
+    if (!user.email) return;
+
+    input.value = '';
+
+    const payload = {
+      sender_email: user.email,
+      receiver_email: activeBuddy.email,
+      message_text: text
+    };
+
+    try {
+      await fetch(`${API_BASE}/send-buddy-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch(e) {
+      try {
+        const localKey = `travelverse_chat_${user.email.toLowerCase()}_${activeBuddy.email.toLowerCase()}`;
+        let localMsgs = JSON.parse(localStorage.getItem(localKey) || '[]');
+        localMsgs.push({ ...payload, created_at: new Date().toISOString() });
+        localStorage.setItem(localKey, JSON.stringify(localMsgs));
+      } catch(err){}
+    }
+
+    fetchAndRenderMessages();
+  };
+
+  document.getElementById('buddy-search-input')?.addEventListener('input', renderSidebarBuddies);
+
+  // Init
+  renderUserHeader();
+  loadBuddiesFromBackendAndLocal();
+</script>
+</body>
+</html>

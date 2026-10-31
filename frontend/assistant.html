@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TravelVerse — Assistant</title>
+<script>
+  (function(){
+    var activeEmail = (localStorage.getItem('travelverse_current_user_email') || '').trim().toLowerCase();
+    var isAuth = localStorage.getItem('travelverse_session_active') === 'true';
+    if (!isAuth || !activeEmail || activeEmail === 'null' || activeEmail === 'undefined') {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-night: #0B2027;
+    --bg-night-2: #123A42;
+    --card-cream: #FFFDF8;
+    --ink: #17242A;
+    --ink-soft: #55625F;
+    --accent-sunset: #E8874A;
+    --accent-coral: #D6555A;
+    --gold: #C9A227;
+    --star: #FDEBD3;
+    --line: rgba(23,36,42,0.12);
+    --page-bg: #F4EEE2;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    font-family:'Work Sans', sans-serif;
+    color: var(--ink);
+    background: var(--page-bg);
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- NAV (same pattern as dashboard.html) ---------- */
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 5vw;
+    background: var(--bg-night);
+    color: var(--star);
+    flex-shrink:0;
+  }
+  .logo{ font-family:'Fraunces', serif; font-weight:700; font-size:20px; display:flex; align-items:center; gap:8px; }
+  .logo-dot{ width:8px; height:8px; border-radius:50%; background: var(--gold); }
+  .nav-links{ display:flex; gap:30px; font-size:14px; font-weight:500; }
+  .nav-links a{ color: rgba(253,235,211,0.75); text-decoration:none; transition: color .2s ease; }
+  .nav-links a.active{ color: var(--star); border-bottom:2px solid var(--gold); padding-bottom:4px; }
+  .nav-links a:hover{ color: var(--star); }
+  .nav-right{ display:flex; align-items:center; gap:16px; }
+  .user-chip{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; }
+  .user-avatar{
+    width:30px; height:30px; border-radius:50%; overflow:hidden;
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-weight:700; font-size:13px; color:#fff;
+  }
+  .user-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .account-menu-wrap{ position:relative; }
+  .account-menu-trigger{
+    display:flex; align-items:center; gap:6px;
+    background:none; border:none; color: var(--star);
+    font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+    padding:6px 4px;
+  }
+  .account-menu-trigger .chevron{
+    transition: transform .18s ease;
+    opacity:.7;
+  }
+  .account-menu-trigger.open .chevron{ transform: rotate(180deg); }
+  .account-menu{
+    position:absolute; top: calc(100% + 8px); right:0;
+    background: var(--card-cream);
+    border-radius: 12px;
+    box-shadow: 0 16px 34px rgba(0,0,0,0.22);
+    min-width: 160px;
+    padding: 6px;
+    opacity:0; visibility:hidden; transform: translateY(-6px);
+    transition: opacity .16s ease, transform .16s ease, visibility .16s ease;
+    z-index: 50;
+  }
+  .account-menu.show{ opacity:1; visibility:visible; transform: translateY(0); }
+  .account-menu-item{
+    display:block; width:100%; text-align:left;
+    background:none; border:none; border-radius:8px;
+    padding:9px 12px; font-family:inherit; font-size:13.5px; font-weight:600;
+    color: var(--ink); cursor:pointer; transition: background .15s ease;
+  }
+  .account-menu-item:hover{ background: rgba(23,36,42,0.06); }
+  .account-menu-item.danger{ color: var(--accent-coral); }
+
+  /* ---------- ASSISTANT LAYOUT ---------- */
+  .assistant-wrap{
+    flex:1; display:flex; min-height:0;
+    max-width: 900px; width:100%; margin: 0 auto;
+    padding: 26px 5vw 26px;
+    gap: 22px;
+  }
+
+  /* Sidebar: suggested prompts */
+  .suggestions{
+    width: 240px; flex-shrink:0;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .suggestions h2{
+    font-family:'Fraunces', serif; font-weight:600; font-size:15px; margin:0 0 4px;
+  }
+  .suggestion-chip{
+    text-align:left;
+    background: var(--card-cream);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-family: inherit; font-size:13px; color: var(--ink);
+    cursor:pointer; transition: border-color .18s ease, transform .18s ease;
+  }
+  .suggestion-chip:hover{ border-color: var(--accent-sunset); transform: translateY(-1px); }
+
+  /* Chat column */
+  .chat-col{
+    flex:1; min-width:0;
+    display:flex; flex-direction:column;
+    background: var(--card-cream);
+    border-radius: 22px;
+    box-shadow: 0 20px 44px rgba(23,36,42,0.12);
+    overflow:hidden;
+  }
+  .chat-head{
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+    display:flex; align-items:center; gap:10px;
+  }
+  .chat-head-dot{ width:8px; height:8px; border-radius:50%; background:#3fb87f; }
+  .chat-head-title{ font-family:'Fraunces', serif; font-weight:600; font-size:15.5px; }
+  .chat-head-sub{ font-size:11.5px; color: var(--ink-soft); }
+
+  .chat-log{
+    flex:1; overflow-y:auto;
+    padding: 22px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+
+  .bubble-row{ display:flex; }
+  .bubble-row.user{ justify-content:flex-end; }
+  .bubble{
+    max-width: 78%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.55;
+    opacity:0;
+    animation: bubble-in .3s ease forwards;
+  }
+  @keyframes bubble-in{ from{ opacity:0; transform: translateY(6px);} to{ opacity:1; transform: translateY(0);} }
+  .bubble.bot{
+    background: linear-gradient(120deg, rgba(232,135,74,0.14), rgba(201,162,39,0.09));
+    border: 1px solid rgba(232,135,74,0.2);
+    border-bottom-left-radius: 4px;
+    color: var(--ink);
+  }
+  .bubble.user{
+    background: var(--bg-night);
+    color: var(--star);
+    border-bottom-right-radius: 4px;
+  }
+
+  .typing-row{ display:flex; }
+  .typing{
+    display:inline-flex; gap:4px; padding: 14px 16px;
+    background: rgba(232,135,74,0.1); border-radius:16px; border-bottom-left-radius:4px;
+  }
+  .typing span{
+    width:6px; height:6px; border-radius:50%; background: var(--accent-sunset);
+    animation: bounce 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2){ animation-delay: .15s; }
+  .typing span:nth-child(3){ animation-delay: .3s; }
+  @keyframes bounce{ 0%,60%,100%{ transform: translateY(0); opacity:.5; } 30%{ transform: translateY(-5px); opacity:1; } }
+
+  .chat-input-row{
+    border-top: 1px solid var(--line);
+    padding: 14px 16px;
+    display:flex; gap:10px; align-items:center;
+  }
+  #chat-input{
+    flex:1;
+    border: 1.5px solid var(--line);
+    border-radius: 24px;
+    padding: 11px 18px;
+    font-size: 14px;
+    font-family: inherit;
+    outline:none;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  #chat-input:focus{ border-color: var(--accent-sunset); box-shadow: 0 0 0 4px rgba(232,135,74,0.14); }
+  #chat-send{
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; border:none; border-radius:50%;
+    width:42px; height:42px; flex-shrink:0;
+    font-size:16px; cursor:pointer;
+    transition: transform .15s ease;
+  }
+  #chat-send:hover{ transform: scale(1.06); }
+  #chat-send:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+
+  /* Modal styles for saving trip interest */
+  .modal-overlay{
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    background:rgba(11,32,39,0.7); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center;
+    z-index:9999; opacity:0; visibility:hidden; transition:all .2s ease;
+  }
+  .modal-overlay.show{ display:flex; opacity:1; visibility:visible; }
+  .modal-card{
+    background:var(--card-cream); border-radius:24px; padding:32px;
+    position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.3);
+    border:1px solid rgba(23,36,42,0.1); width:90%; max-width:520px;
+  }
+  .modal-close{
+    position:absolute; top:20px; right:20px; background:none; border:none;
+    font-size:22px; cursor:pointer; color:var(--ink-soft); width:32px; height:32px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close:hover{ background:rgba(23,36,42,0.06); }
+  .modal-eyebrow{ font-size:11px; font-weight:700; letter-spacing:1px; color:var(--accent-sunset); text-transform:uppercase; margin-bottom:4px; }
+  .modal-sub{ font-size:13.5px; color:var(--ink-soft); margin:0 0 20px 0; }
+  .modal-field{ margin-bottom:16px; text-align:left; }
+  .modal-field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+  .modal-field input, .modal-field textarea{
+    width:100%; padding:11px 14px; border:1.5px solid var(--line); border-radius:12px;
+    font-size:13.5px; font-family:inherit; background:#fff; outline:none; transition:border-color .18s ease;
+  }
+  .modal-field input:focus, .modal-field textarea:focus{ border-color:var(--accent-sunset); box-shadow:0 0 0 3px rgba(232,135,74,0.12); }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:12px; margin-top:24px; }
+  .modal-btn-sec{ background:none; border:1.5px solid var(--line); padding:10px 20px; border-radius:24px; font-size:13px; font-weight:600; cursor:pointer; color:var(--ink); }
+  .modal-btn-pri{ background:linear-gradient(135deg, var(--accent-sunset), var(--accent-coral)); color:#fff; border:none; padding:10px 22px; border-radius:24px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 4px 14px rgba(232,135,74,0.3); }
+
+  @media (max-width: 760px){
+    .assistant-wrap{ flex-direction:column; padding: 18px 5vw; }
+    .suggestions{ width:100%; flex-direction:row; overflow-x:auto; }
+    .suggestion-chip{ flex-shrink:0; }
+    .nav-links{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span class="logo-dot"></span> TravelVerse</div>
+  <div class="nav-links">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="companions.html">Find companions</a>
+    <a href="connections.html">Connections</a>
+    <a href="chat.html">Chat</a>
+    <a href="agent.html">Agents</a>
+    <a href="assistant.html" class="active">Assistant</a>
+  </div>
+  <div class="nav-right">
+    <div class="user-chip">
+      <div class="user-avatar" id="user-avatar">T</div>
+      <div class="account-menu-wrap">
+        <button type="button" class="account-menu-trigger" id="account-menu-trigger">
+          <span id="user-name-chip">Traveller</span>
+          <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <script>
+          (function(){
+            try {
+              var u = localStorage.getItem('travelverse_username') || localStorage.getItem('travelverse_user_name');
+              var p = localStorage.getItem('travelverse_profile_pic');
+              if (u && u !== 'null' && u !== 'undefined' && u.toLowerCase() !== 'traveller') {
+                var nc = document.getElementById('user-name-chip');
+                var av = document.getElementById('user-avatar');
+                if (nc) nc.textContent = u;
+                if (av) av.textContent = u.charAt(0).toUpperCase();
+              }
+              if (p && p.length > 10) {
+                var av = document.getElementById('user-avatar');
+                if (av) av.innerHTML = '<img src="' + p + '" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;">';
+              }
+            } catch(e){}
+          })();
+        </script>
+        <div class="account-menu" id="account-menu">
+          <button type="button" id="logout-btn" class="account-menu-item danger">Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="assistant-wrap">
+  <div class="suggestions">
+    <h2>Try asking</h2>
+    <button type="button" class="suggestion-chip" data-ask="What's the weather like in Goa next week?">🌦️ Weather in Goa next week?</button>
+    <button type="button" class="suggestion-chip" data-ask="Do I need a visa for Thailand?">🛂 Visa for Thailand?</button>
+    <button type="button" class="suggestion-chip" data-ask="What should I pack for a beach trip?">🎒 Packing list for a beach trip</button>
+    <button type="button" class="suggestion-chip" data-ask="What's a good budget for 5 days in Bali?">💰 Budget for 5 days in Bali</button>
+    <button type="button" class="suggestion-chip" data-ask="Is it safe to travel solo in Vietnam?">🛡️ Solo travel safety in Vietnam</button>
+    <button type="button" class="suggestion-chip" data-ask="What currency does Japan use?">💱 Currency in Japan</button>
+  </div>
+
+  <div class="chat-col">
+    <div class="chat-head">
+      <span class="chat-head-dot"></span>
+      <div>
+        <div class="chat-head-title">TravelVerse Assistant</div>
+        <div class="chat-head-sub">Ask about weather, visas, packing, budgets, or safety</div>
+      </div>
+      <button type="button" id="assistant-save-interest-btn" onclick="openAssistantInterestModal()" style="margin-left:auto; background:linear-gradient(135deg, var(--accent-sunset), var(--accent-coral)); color:#fff; border:none; padding:8px 16px; border-radius:20px; font-weight:600; font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(232,135,74,0.25);">📌 Save Trip Interest to DB</button>
+    </div>
+
+    <div class="chat-log" id="chat-log">
+      <div class="bubble-row">
+        <div class="bubble bot">Hey! I'm your TravelVerse assistant. Ask me about weather, visas, packing lists, budgets, currency, or safety for wherever you're headed.</div>
+      </div>
+    </div>
+
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Ask about your trip…" autocomplete="off">
+      <button type="button" id="chat-send" aria-label="Send">→</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------- Identity chip (same pattern as dashboard.html) ----------
+  const storedEmail = localStorage.getItem('travelverse_current_user_email') || '';
+  const storedName = localStorage.getItem('travelverse_user_name');
+  const storedUsername = localStorage.getItem('travelverse_username');
+  const storedPic = localStorage.getItem('travelverse_profile_pic');
+
+  let accounts = [];
+  try { accounts = JSON.parse(localStorage.getItem('travelverse_accounts') || '[]'); } catch(e) {}
+  const activeUserObj = accounts.find(a => a && a.email && a.email.toLowerCase() === storedEmail.toLowerCase());
+
+  let realName = storedName || (activeUserObj ? (activeUserObj.firstName ? (activeUserObj.firstName + (activeUserObj.lastName ? ' ' + activeUserObj.lastName : '')) : (activeUserObj.first_name || activeUserObj.username)) : '');
+  if (!realName || realName === 'Traveller') {
+    if (storedUsername && storedUsername !== 'traveller') realName = storedUsername;
+  }
+  if (!realName) realName = 'Traveller';
+
+  let realUsername = storedUsername || (activeUserObj ? activeUserObj.username : '');
+  if (!realUsername && realName !== 'Traveller') realUsername = realName;
+  if (!realUsername) realUsername = 'traveller';
+
+  let realPic = storedPic || (activeUserObj ? (activeUserObj.profilePic || activeUserObj.profile_pic) : '');
+
+  const avatarEl = document.getElementById('user-avatar');
+  const nameChipEl = document.getElementById('user-name-chip');
+  const displayName = (realUsername && realUsername !== 'traveller') ? realUsername : realName;
+
+  nameChipEl.textContent = displayName;
+  if(realPic){
+    avatarEl.innerHTML = `<img src="${realPic}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;">`;
+  } else {
+    avatarEl.textContent = displayName.charAt(0).toUpperCase();
+  }
+
+  // ---------- Account dropdown menu ----------
+  const menuTrigger = document.getElementById('account-menu-trigger');
+  const menuPanel = document.getElementById('account-menu');
+
+  function closeMenu(){
+    menuPanel.classList.remove('show');
+    menuTrigger.classList.remove('open');
+  }
+  menuTrigger.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const isOpen = menuPanel.classList.toggle('show');
+    menuTrigger.classList.toggle('open', isOpen);
+  });
+  document.addEventListener('click', (e)=>{
+    if(!menuPanel.contains(e.target) && e.target !== menuTrigger){
+      closeMenu();
+    }
+  });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') closeMenu();
+  });
+
+  // Log out ends the current session only — it does NOT delete the
+  // account. The name/username/badges/profile picture/credentials all
+  // stay in place, so logging back in with the same details still works.
+  document.getElementById('logout-btn').addEventListener('click', ()=>{
+    localStorage.removeItem('travelverse_session_active');
+    window.location.href = 'login.html';
+  });
+
+  // ---------- Chat engine ----------
+  // Front-end only, rule-based, for now — no real backend/AI API wired up
+  // yet. Everything routes through generateReply(userText) below, so
+  // swapping this for a real API call later only means changing this one
+  // function (e.g. fetch('/api/assistant', {...}) and returning the
+  // response text) — nothing else in this file needs to change.
+  const chatLog = document.getElementById('chat-log');
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+
+  function addBubble(text, who){
+    const row = document.createElement('div');
+    row.className = 'bubble-row' + (who === 'user' ? ' user' : '');
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble ' + who;
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chatLog.appendChild(row);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function showTyping(){
+    const row = document.createElement('div');
+    row.className = 'typing-row';
+    row.id = 'typing-indicator';
+    row.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+    chatLog.appendChild(row);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function hideTyping(){
+    const row = document.getElementById('typing-indicator');
+    if(row) row.remove();
+  }
+
+  // ---------- Real weather via Open-Meteo (free, no API key needed) ----------
+  const weatherCodeMap = {
+    0: 'clear sky', 1: 'mostly clear', 2: 'partly cloudy', 3: 'overcast',
+    45: 'foggy', 48: 'foggy with frost',
+    51: 'light drizzle', 53: 'drizzle', 55: 'heavy drizzle',
+    56: 'light freezing drizzle', 57: 'freezing drizzle',
+    61: 'light rain', 63: 'rain', 65: 'heavy rain',
+    66: 'light freezing rain', 67: 'freezing rain',
+    71: 'light snow', 73: 'snow', 75: 'heavy snow', 77: 'snow grains',
+    80: 'light rain showers', 81: 'rain showers', 82: 'heavy rain showers',
+    85: 'light snow showers', 86: 'heavy snow showers',
+    95: 'thunderstorm', 96: 'thunderstorm with light hail', 99: 'thunderstorm with heavy hail'
+  };
+
+  // Tries the full phrase first ("udaipur rajasthan"), and if that finds
+  // nothing, drops the last word and retries ("udaipur") — since
+  // Open-Meteo's geocoding matches on the place name itself, not
+  // "city + state" as one combined string. Whatever's left over after the
+  // successful match becomes a "hint" used to pick the right one among
+  // same-named places (e.g. "rajasthan" for "udaipur rajasthan").
+  async function geocodePlace(rawPlace){
+    const words = rawPlace.split(/\s+/).filter(Boolean);
+    for(let i = words.length; i >= 1; i--){
+      const attempt = words.slice(0, i).join(' ');
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(attempt)}&count=8`);
+      const data = await res.json();
+      if(data.results && data.results.length > 0){
+        const hint = words.slice(i).join(' ').toLowerCase();
+        return { results: data.results, hint, matchedQuery: attempt };
+      }
+    }
+    return { results: [], hint: '', matchedQuery: rawPlace };
+  }
+
+  // Picks the right match instead of blindly trusting the API's first
+  // result — same-named places exist in different states/countries (e.g.
+  // there's a Manali in Himachal Pradesh and a separate one in Tamil Nadu).
+  // If a state/country hint was given, use it. If not, and one match is
+  // an obviously much bigger/well-known place (population), use that
+  // instead of flagging a tiny, obscure same-named place as ambiguous.
+  function pickBestMatch(results, hint){
+    if(hint){
+      const hinted = results.find(r =>
+        (r.admin1 && r.admin1.toLowerCase().includes(hint)) ||
+        (r.country && r.country.toLowerCase().includes(hint))
+      );
+      if(hinted) return { match: hinted, ambiguous: false, options: null };
+    }
+
+    const distinct = [];
+    for(const r of results.slice(0, 5)){
+      const key = (r.admin1 || '') + '|' + (r.country || '');
+      if(!distinct.some(d => d.key === key)) distinct.push({ key, r });
+    }
+
+    if(distinct.length > 1){
+      const sorted = distinct.map(d => d.r).sort((a, b) => (b.population || 0) - (a.population || 0));
+      const top = sorted[0];
+      const runnerUp = sorted[1];
+      const topPop = top.population || 0;
+      const runnerUpPop = runnerUp.population || 0;
+
+      if(topPop > 0 && (runnerUpPop === 0 || topPop >= runnerUpPop * 5)){
+        return { match: top, ambiguous: false, options: null };
+      }
+      return { match: null, ambiguous: true, options: sorted };
+    }
+    return { match: results[0], ambiguous: false, options: null };
+  }
+
+  // ---------- Real AI (Groq) ----------
+  // Get a free key at https://console.groq.com/keys — no credit card
+  // needed. Paste it below. Until you do, GROQ_API_KEY stays empty and
+  // the assistant automatically uses the canned fallback answers instead
+  // (nothing breaks either way).
+  //
+  // IMPORTANT SECURITY NOTE: this key is embedded directly in this HTML
+  // file, which means anyone who views your page's source can see and
+  // use it — fine while you're testing this yourself, but before real
+  // strangers use this app, move this fetch call to a backend server you
+  // control (so the key lives server-side, never sent to the browser)
+  // and have the frontend call your backend instead of Groq directly.
+  const GROQ_API_KEY = ""; // <-- paste your key between these quotes
+  const GROQ_MODEL = 'openai/gpt-oss-20b';
+
+  // ---------- The get_weather tool ----------
+  // This is the ONLY place real weather data comes from. The AI decides
+  // when to call it and what "place" argument to pass — it extracts that
+  // from full conversation understanding (any phrasing, pronouns, follow-
+  // ups), not a regex. This function just does the real lookup and hands
+  // back a plain-text description of the real result for the AI to phrase
+  // into a natural reply — it never invents the numbers itself.
+  const weatherTool = {
+    type: 'function',
+    function: {
+      name: 'get_weather',
+      description: 'Get the real, current live weather for a specific place. Call this any time the user asks about weather, temperature, rain, climate, or conditions anywhere — extract the place from their message, using conversation context if they used a pronoun like "there" or didn\'t repeat the place name. If they mentioned a state/country, include it in the place argument exactly as they said it.',
+      parameters: {
+        type: 'object',
+        properties: {
+          place: {
+            type: 'string',
+            description: 'The place the user means, including any state/country they mentioned, e.g. "Udaipur Rajasthan" or just "Goa".'
+          }
+        },
+        required: ['place']
+      }
+    }
+  };
+
+  async function runWeatherTool(placeArg){
+    try{
+      const { results, hint } = await geocodePlace(placeArg);
+      if(results.length === 0){
+        return `No place found matching "${placeArg}". Tell the user to double-check the spelling — don't guess a location.`;
+      }
+
+      const { match, ambiguous, options } = pickBestMatch(results, hint);
+
+      if(ambiguous){
+        const list = options.slice(0, 3)
+          .map(o => [o.name, o.admin1, o.country].filter(Boolean).join(', '))
+          .join(' / ');
+        return `AMBIGUOUS — multiple real places match "${placeArg}": ${list}. Ask the user which one they mean instead of guessing.`;
+      }
+
+      const { latitude, longitude, name, country, admin1 } = match;
+      const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&temperature_unit=celsius&windspeed_unit=kmh`);
+      const weatherData = await weatherRes.json();
+      const cw = weatherData.current_weather;
+      if(!cw){
+        return `Found the location (${name}) but the live conditions endpoint returned nothing. Tell the user to try again in a moment.`;
+      }
+      const desc = weatherCodeMap[cw.weathercode] || 'unknown conditions';
+      const placeLabel = [name, admin1, country].filter(Boolean).join(', ');
+      return `Real live weather right now for ${placeLabel}: ${Math.round(cw.temperature)}°C, ${desc}, wind ${Math.round(cw.windspeed)} km/h. Use these exact numbers — never change or round them differently.`;
+    }catch(err){
+      return `The weather service couldn't be reached due to a network error. Tell the user to check their connection and try again.`;
+    }
+  }
+
+  // Built fresh each call (not a static string) so it always reflects the
+  // real date on whatever day a real user is actually using this — the
+  // AI has no built-in sense of "today" otherwise, which is exactly what
+  // caused it to guess "October" when it was actually still July.
+  function buildSystemPrompt(){
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    return `You are the TravelVerse Assistant, a warm, natural-sounding travel-planning helper inside a travel app — talk like a knowledgeable friend, not a form. Today's actual real-world date is ${dateStr}. Always use this exact date when reasoning about "next month", "this weekend", seasons, or anything relative to "now" — never assume or guess a different date. Keep answers to 2-4 sentences unless the person clearly wants more detail. Remember and build on what was said earlier in this conversation. You have a get_weather tool for real live weather — use it whenever weather comes up, in any phrasing, rather than guessing. For anything else needing current/real-time info you cannot verify (exact prices, live safety alerts, visa rule changes), say so honestly and point to where to check, rather than guessing specifics.`;
+  }
+
+  // Low-level call — returns the raw API response so callers can inspect
+  // tool_calls, not just plain text (needed for the two-step tool flow).
+  async function callGroq(messages){
+    if(!GROQ_API_KEY) return null; // no key yet — caller falls back
+    try{
+      const res = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: GROQ_MODEL,
+            messages,
+            tools: [weatherTool]
+          })
+        }
+      );
+      if(!res.ok){
+        const errBody = await res.text().catch(()=> '');
+        console.warn('Groq API call failed:', res.status, errBody);
+        return null;
+      }
+      return await res.json();
+    }catch(err){
+      console.warn('Groq API call threw an error:', err);
+      return null; // network/API issue — caller falls back
+    }
+  }
+
+  // Holds the running conversation so follow-ups make sense (e.g. "what
+  // about in December?" after asking about a place) — every call
+  // includes the recent history so the AI has real context, not just
+  // the latest isolated message.
+  let conversationHistory = [];
+  const MAX_HISTORY_MESSAGES = 16; // keep the last 8 exchanges
+
+  async function generateReply(userText){
+    const baseMessages = [
+      { role: 'system', content: buildSystemPrompt() },
+      ...conversationHistory,
+      { role: 'user', content: userText }
+    ];
+
+    const first = await callGroq(baseMessages);
+
+    let reply;
+    if(!first){
+      reply = "I don't have a working AI connection right now — check that a Groq API key is set, or try again in a moment.";
+    } else {
+      const msg = first?.choices?.[0]?.message;
+      if(msg?.tool_calls?.length){
+        // The AI decided this needs real weather data — run the tool for
+        // real, then let the AI phrase the final answer using that real
+        // result (never inventing numbers itself).
+        const call = msg.tool_calls[0];
+        let args = {};
+        try{ args = JSON.parse(call.function.arguments); }catch(err){ /* malformed args, fall through with empty place */ }
+        const toolResultText = await runWeatherTool(args.place || userText);
+
+        const followUpMessages = [
+          ...baseMessages,
+          msg,
+          { role: 'tool', tool_call_id: call.id, content: toolResultText }
+        ];
+        const second = await callGroq(followUpMessages);
+        reply = second?.choices?.[0]?.message?.content?.trim() || toolResultText;
+      } else {
+        reply = msg?.content?.trim() || "I'm not sure how to answer that — could you rephrase?";
+      }
+    }
+
+    conversationHistory.push({ role: 'user', content: userText });
+    conversationHistory.push({ role: 'assistant', content: reply });
+    if(conversationHistory.length > MAX_HISTORY_MESSAGES){
+      conversationHistory = conversationHistory.slice(-MAX_HISTORY_MESSAGES);
+    }
+
+    return reply;
+  }
+
+
+
+  async function handleSend(){
+    const text = chatInput.value.trim();
+    if(!text) return;
+    addBubble(text, 'user');
+    chatInput.value = '';
+    chatSend.disabled = true;
+
+    showTyping();
+    // Keep at least a short typing beat even though the real weather
+    // fetch is usually fast, so it doesn't feel like an instant canned reply.
+    const [reply] = await Promise.all([
+      generateReply(text),
+      new Promise(resolve => setTimeout(resolve, 500))
+    ]);
+    hideTyping();
+    addBubble(reply, 'bot');
+    chatSend.disabled = false;
+    chatInput.focus();
+  }
+
+  chatSend.addEventListener('click', handleSend);
+  chatInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter') handleSend();
+  });
+
+  // ---------- ASSISTANT SAVE TRIP INTEREST TO DATABASE ----------
+  const API_BASE = "http://127.0.0.1:8000";
+
+  function showAssistantToast(type, title, message) {
+    let container = document.getElementById("toast-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "toast-container";
+      container.style.cssText = "position: fixed; bottom: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;";
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement("div");
+    const bg = type === "error" ? "#D6555A" : type === "info" ? "#0B2027" : "#3FB87F";
+    toast.style.cssText = `background: ${bg}; color: #fff; padding: 14px 20px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); font-family: 'Work Sans', sans-serif; font-size: 13.5px; max-width: 340px; transform: translateY(20px); opacity: 0; transition: all 0.3s ease; display: flex; flex-direction: column; gap: 2px;`;
+    toast.innerHTML = `<strong style="font-weight: 700;">${title}</strong><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transform = "translateY(0)";
+      toast.style.opacity = "1";
+    }, 10);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(10px)";
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  function openAssistantInterestModal(presetDest = '', presetDates = '', presetNotes = '') {
+    const modal = document.getElementById('assistant-interest-modal');
+    if (modal) {
+      if (presetDest) document.getElementById('asst-interest-dest').value = presetDest;
+      if (presetDates) document.getElementById('asst-interest-dates').value = presetDates;
+      if (presetNotes) document.getElementById('asst-interest-notes').value = presetNotes;
+
+      modal.classList.add('show');
+      modal.style.display = 'flex';
+      modal.style.opacity = '1';
+      modal.style.visibility = 'visible';
+    }
+  }
+
+  function closeAssistantInterestModal() {
+    const modal = document.getElementById('assistant-interest-modal');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      modal.style.opacity = '0';
+      modal.style.visibility = 'hidden';
+    }
+  }
+  window.openAssistantInterestModal = openAssistantInterestModal;
+  window.closeAssistantInterestModal = closeAssistantInterestModal;
+
+  const asstSaveBtn = document.getElementById('asst-interest-save');
+  if (asstSaveBtn) {
+    asstSaveBtn.addEventListener('click', async () => {
+      const dest = document.getElementById('asst-interest-dest').value.trim();
+      const dates = document.getElementById('asst-interest-dates').value.trim();
+      const budget = document.getElementById('asst-interest-budget').value.trim();
+      const notes = document.getElementById('asst-interest-notes').value.trim();
+
+      if (!dest || !dates) {
+        showAssistantToast('error', 'Missing Information', 'Please enter both Destination and Preferred Dates.');
+        return;
+      }
+
+      let activeEmail = (localStorage.getItem('travelverse_current_user_email') || '').trim().toLowerCase();
+      if (!activeEmail) activeEmail = 'guest@travelverse.com';
+
+      const payload = {
+        user_email: activeEmail,
+        destination: dest,
+        preferred_dates: dates,
+        budget: budget,
+        notes: notes
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/add-trip-interest`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          showAssistantToast('success', 'Saved to Profile!', `Saved trip interest "${dest}" to your trip profile!`);
+        } else {
+          showAssistantToast('success', 'Trip Interest Saved', `Saved "${dest}" to your trip profile.`);
+        }
+      } catch(e) {
+        console.warn('Backend note, saving locally:', e);
+        showAssistantToast('info', 'Saved Locally', `Saved "${dest}" to local profile.`);
+      }
+
+      // Sync local storage
+      try {
+        let currentLocal = JSON.parse(localStorage.getItem(`travelverse_interests_${activeEmail}`) || '[]');
+        currentLocal.unshift({
+          id: Date.now(),
+          ...payload,
+          created_at: new Date().toISOString()
+        });
+        localStorage.setItem(`travelverse_interests_${activeEmail}`, JSON.stringify(currentLocal));
+      } catch(err){}
+
+      closeAssistantInterestModal();
+    });
+  }
+</script>
+
+<!-- ASSISTANT SAVE TRIP INTEREST MODAL -->
+<div id="assistant-interest-modal" class="modal-overlay">
+  <div class="modal-card" style="width:520px;">
+    <button type="button" onclick="closeAssistantInterestModal()" class="modal-close" aria-label="Close">×</button>
+    <div class="modal-eyebrow">DESTINATION PLANNING</div>
+    <h2 style="font-family:'Fraunces',serif; margin-top:4px;">📌 Save Trip Interest</h2>
+    <p class="modal-sub">Store this destination and your preferred dates directly into your trip profile.</p>
+
+    <div class="modal-field">
+      <label for="asst-interest-dest">Destination / Location</label>
+      <input type="text" id="asst-interest-dest" placeholder="e.g. Bali, Indonesia" required>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <div class="modal-field" style="flex:1;">
+        <label for="asst-interest-dates">Preferred Travel Dates</label>
+        <input type="text" id="asst-interest-dates" placeholder="e.g. Dec 10 - Dec 20, 2026" required>
+      </div>
+      <div class="modal-field" style="flex:1;">
+        <label for="asst-interest-budget">Est. Budget (Optional)</label>
+        <input type="text" id="asst-interest-budget" placeholder="e.g. $1,200">
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label for="asst-interest-notes">Trip Notes & Ideas</label>
+      <textarea id="asst-interest-notes" rows="3" placeholder="Notes from AI assistant recommendations..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" onclick="closeAssistantInterestModal()" class="modal-btn-sec">Cancel</button>
+      <button type="button" id="asst-interest-save" class="modal-btn-pri">Save Trip Interest</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

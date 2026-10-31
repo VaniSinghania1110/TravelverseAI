@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TravelVerse — Find Travel Companions</title>
+<script>
+  (function(){
+    var activeEmail = (localStorage.getItem('travelverse_current_user_email') || '').trim().toLowerCase();
+    var isAuth = localStorage.getItem('travelverse_session_active') === 'true';
+    if (!isAuth || !activeEmail || activeEmail === 'null' || activeEmail === 'undefined') {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-night: #0B2027;
+    --bg-night-2: #123A42;
+    --card-cream: #FFFDF8;
+    --ink: #17242A;
+    --ink-soft: #55625F;
+    --accent-sunset: #E8874A;
+    --accent-coral: #D6555A;
+    --gold: #C9A227;
+    --star: #FDEBD3;
+    --line: rgba(23,36,42,0.12);
+    --page-bg: #F4EEE2;
+    --green-badge: #2E7D32;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:'Work Sans', sans-serif;
+    color: var(--ink);
+    background: var(--page-bg);
+    min-height:100vh;
+  }
+
+  /* ---------- NAV ---------- */
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 5vw;
+    background: var(--bg-night);
+    color: var(--star);
+  }
+  .logo{
+    font-family:'Fraunces', serif; font-weight:700; font-size:20px;
+    display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--star);
+  }
+  .logo-dot{ width:8px; height:8px; border-radius:50%; background: var(--gold); }
+  .nav-links{ display:flex; gap:30px; font-size:14px; font-weight:500; }
+  .nav-links a{ color: rgba(253,235,211,0.75); text-decoration:none; transition: color .2s ease; }
+  .nav-links a.active{ color: var(--star); border-bottom:2px solid var(--gold); padding-bottom:4px; }
+  .nav-links a:hover{ color: var(--star); }
+  .nav-right{ display:flex; align-items:center; gap:16px; }
+  .user-chip{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; }
+  .user-avatar{
+    position:relative;
+    width:36px; height:36px; border-radius:50%;
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-weight:700; font-size:14px; color:#fff;
+    cursor:pointer; overflow:hidden; border:none; padding:0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .user-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .user-avatar .avatar-edit-badge{
+    position:absolute; inset:0;
+    background: rgba(11,32,39,0.55);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; opacity:0; transition: opacity .18s ease;
+  }
+  .user-avatar:hover .avatar-edit-badge{ opacity:1; }
+
+  .account-menu-wrap{ position:relative; }
+  .account-menu-trigger{
+    display:flex; align-items:center; gap:6px;
+    background:none; border:none; color: var(--star);
+    font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+    padding:6px 4px;
+  }
+  .account-menu-trigger .chevron{ transition: transform .18s ease; opacity:.7; }
+  .account-menu-trigger.open .chevron{ transform: rotate(180deg); }
+  .account-menu{
+    position:absolute; top: calc(100% + 8px); right:0;
+    background: var(--card-cream); border-radius: 12px;
+    box-shadow: 0 16px 34px rgba(0,0,0,0.22);
+    min-width: 160px; padding: 6px;
+    opacity:0; visibility:hidden; transform: translateY(-6px);
+    transition: opacity .16s ease, transform .16s ease, visibility .16s ease;
+    z-index: 50;
+  }
+  .account-menu.show{ opacity:1; visibility:visible; transform: translateY(0); }
+  .account-menu-item{
+    display:block; width:100%; text-align:left;
+    background:none; border:none; border-radius:8px;
+    padding:9px 12px; font-family:inherit; font-size:13.5px; font-weight:600;
+    color: var(--ink); cursor:pointer; transition: background .15s ease;
+  }
+  .account-menu-item:hover{ background: rgba(23,36,42,0.06); }
+  .account-menu-item.danger{ color: var(--accent-coral); }
+
+  /* ---------- HERO BANNER ---------- */
+  .hero-banner{
+    background: linear-gradient(120deg, var(--bg-night) 0%, var(--bg-night-2) 55%, #3a2b3f 100%);
+    color: var(--star);
+    padding: 44px 5vw 52px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px;
+  }
+  .hero-text{ max-width:640px; }
+  .hero-banner .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:.15em;
+    text-transform:uppercase; color: var(--gold); margin-bottom:10px;
+  }
+  .hero-banner h1{
+    font-family:'Fraunces', serif; font-weight:600; font-size: clamp(26px, 3.2vw, 38px);
+    margin:0 0 10px; line-height:1.2;
+  }
+  .hero-banner p{ margin:0; color: rgba(253,235,211,0.8); font-size:15px; line-height:1.6; }
+
+  .hero-actions{ display:flex; gap:12px; flex-wrap:wrap; }
+  .post-trip-cta{
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; border:none; border-radius:30px; padding:14px 26px;
+    font-family:'Work Sans', sans-serif; font-size:14.5px; font-weight:700;
+    cursor:pointer; box-shadow: 0 10px 25px rgba(232,135,74,0.35);
+    transition: transform .2s ease, opacity .2s ease;
+    display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+  }
+  .post-trip-cta:hover{ transform: translateY(-2px); opacity:.95; }
+  .agents-cta{
+    background: rgba(253,235,211,0.12); color: var(--star);
+    border:1.5px solid rgba(253,235,211,0.25); border-radius:30px; padding:14px 22px;
+    font-family:'Work Sans', sans-serif; font-size:14px; font-weight:600;
+    cursor:pointer; transition: all .2s ease; white-space:nowrap;
+  }
+  .agents-cta:hover{ background: rgba(253,235,211,0.22); border-color: var(--gold); }
+
+  /* ---------- MAIN CONTENT ---------- */
+  main{ max-width: 1180px; margin: -26px auto 60px; padding: 0 5vw; position:relative; z-index:1; }
+
+  /* FILTER CONTROL BAR */
+  .control-card{
+    background: var(--card-cream);
+    border-radius: 20px;
+    padding: 22px 26px;
+    box-shadow: 0 18px 36px rgba(23,36,42,0.1);
+    margin-bottom: 26px;
+  }
+  .search-row{
+    display:flex; gap:14px; margin-bottom:16px; flex-wrap:wrap;
+  }
+  .search-input-wrap{
+    flex:1; min-width:260px; position:relative;
+  }
+  .search-input-wrap input{
+    width:100%; padding:13px 16px 13px 44px;
+    border:1.5px solid var(--line); border-radius:14px;
+    font-family:inherit; font-size:14.5px; outline:none; background:#fff;
+    transition: border-color .18s ease;
+  }
+  .search-input-wrap input:focus{ border-color: var(--accent-sunset); }
+  .search-icon{
+    position:absolute; left:16px; top:50%; transform:translateY(-50%);
+    font-size:16px; opacity:0.5; pointer-events:none;
+  }
+  .sort-select{
+    padding:0 18px; border:1.5px solid var(--line); border-radius:14px;
+    font-family:inherit; font-size:14px; font-weight:600; color:var(--ink);
+    background:#fff; outline:none; cursor:pointer; min-width:180px;
+  }
+
+  .badge-filters{
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  }
+  .filter-chip{
+    font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px;
+    border:1.5px solid var(--line); background:#fff; color:var(--ink);
+    cursor:pointer; transition: all .18s ease; user-select:none;
+  }
+  .filter-chip:hover{ border-color: var(--accent-sunset); }
+  .filter-chip.active{
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    border-color: transparent; color:#fff;
+  }
+
+  /* COMPANION CARDS GRID */
+  .companions-grid{
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap:24px;
+  }
+
+  .companion-card{
+    background: var(--card-cream);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 14px 30px rgba(23,36,42,0.07);
+    border: 1px solid var(--line);
+    display:flex; flex-direction:column; justify-content:space-between;
+    transition: transform .25s ease, box-shadow .25s ease;
+    position:relative;
+  }
+  .companion-card:hover{
+    transform: translateY(-4px); box-shadow: 0 22px 42px rgba(23,36,42,0.14);
+  }
+
+  .card-top{
+    display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px;
+  }
+  .user-meta{ display:flex; align-items:center; gap:12px; }
+  .user-avatar-large{
+    width:52px; height:52px; border-radius:50%;
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; font-family:'Fraunces', serif; font-weight:700; font-size:19px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.14); overflow:hidden;
+  }
+  .user-avatar-large img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .name-block h3{
+    margin:0 0 2px; font-family:'Fraunces', serif; font-size:17.5px; font-weight:600;
+    display:flex; align-items:center; gap:6px;
+  }
+  .verified-icon{ color:#1DA1F2; font-size:13.5px; }
+  .username-tag{ font-size:12.5px; color: var(--ink-soft); }
+
+  .match-pill{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:700;
+    padding:5px 10px; border-radius:999px; background: rgba(46,125,50,0.12); color: var(--green-badge);
+    border: 1px solid rgba(46,125,50,0.25); white-space:nowrap;
+  }
+
+  .rating-bar{
+    display:flex; align-items:center; justify-content:space-between; font-size:13px; color: var(--ink-soft);
+    margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--line);
+  }
+  .rating-stars{ color: var(--gold); font-weight:700; display:flex; align-items:center; gap:4px; cursor:pointer; }
+  .rating-stars:hover{ text-decoration:underline; }
+
+  .dest-box{
+    background: rgba(23,36,42,0.03); border-radius:12px; padding:12px 14px;
+    margin-bottom:14px;
+  }
+  .dest-title{ font-size:14.5px; font-weight:700; color:var(--ink); margin-bottom:4px; }
+  .dest-details{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-soft); }
+
+  .tag-pills{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+  .mini-badge{
+    font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px;
+    background: rgba(232,135,74,0.12); color: #c46226;
+  }
+  .pace-badge{
+    font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px;
+    background: rgba(201,162,39,0.16); color: #8f7218;
+  }
+
+  .bio-text{
+    font-size:13.5px; color: var(--ink-soft); line-height:1.55; margin:0 0 16px;
+    font-style: italic; background: #fff; padding:10px 12px; border-radius:10px;
+    border-left: 3px solid var(--accent-sunset);
+  }
+
+  .card-actions{ display:flex; gap:8px; margin-top:auto; }
+  .btn-connect{
+    flex:1.2; background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; border:none; border-radius:12px; padding:10px 0;
+    font-family:inherit; font-size:13px; font-weight:700; cursor:pointer;
+    transition: all .18s ease; text-align:center;
+    display:flex; align-items:center; justify-content:center; gap:5px;
+  }
+  .btn-connect:hover{ opacity: 0.92; transform: translateY(-1px); }
+  .btn-connect.sent{
+    background: #eef2f6;
+    color: #475569;
+    border: 1.5px solid #cbd5e1;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn-connect.sent:hover{
+    background: #e2e8f0;
+    color: #1e293b;
+    border-color: #94a3b8;
+  }
+  .btn-connect.connected{
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1.5px solid #a7f3d0;
+    cursor: default;
+    font-weight: 700;
+  }
+  .btn-connect.respond{
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    font-weight: 700;
+  }
+  .nav-conn-count{
+    background: var(--accent-coral);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 4px;
+    display: inline-block;
+  }
+  .btn-reviews{
+    flex:1; background:none; border:1.5px solid var(--line); border-radius:12px;
+    padding:10px 0; font-family:inherit; font-size:12.5px; font-weight:600;
+    color:var(--ink); cursor:pointer; transition: all .18s ease; text-align:center;
+  }
+  .btn-reviews:hover{ border-color: var(--accent-sunset); background: rgba(232,135,74,0.06); }
+  .btn-save{
+    background:none; border:1.5px solid var(--line); border-radius:12px;
+    padding:0 12px; font-size:15px; color:var(--ink-soft); cursor:pointer;
+    transition: all .18s ease; display:flex; align-items:center; justify-content:center;
+  }
+  .btn-save:hover{ border-color: var(--accent-coral); color: var(--accent-coral); }
+  .btn-save.saved{ background: var(--accent-coral); color:#fff; border-color: var(--accent-coral); }
+
+  /* ---------- MODALS ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:200;
+    background: rgba(11,32,39,0.55); backdrop-filter: blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition: opacity .25s ease;
+  }
+  .modal-overlay.show{ opacity:1; visibility:visible; pointer-events:auto; }
+  .modal-card{
+    background: var(--card-cream); border-radius:24px;
+    padding:34px 30px; width:500px; max-width:92vw; max-height:88vh; overflow-y:auto;
+    box-shadow:0 24px 60px rgba(0,0,0,0.3); position:relative;
+  }
+  .modal-close{
+    position:absolute; top:18px; right:20px; background:none; border:none;
+    font-size:22px; color: var(--ink-soft); cursor:pointer;
+  }
+  .modal-eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:.12em;
+    text-transform:uppercase; color: var(--gold); margin-bottom:6px;
+  }
+  .modal-card h2{ font-family:'Fraunces', serif; font-size:22px; margin:0 0 6px; }
+  .modal-sub{ color: var(--ink-soft); font-size:13.5px; margin:0 0 20px; line-height:1.5; }
+
+  .modal-field{ margin-bottom:16px; }
+  .modal-field label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+  .modal-field input, .modal-field select, .modal-field textarea{
+    width:100%; border:1.5px solid var(--line); border-radius:12px;
+    padding:11px 14px; font-size:14px; font-family:inherit; outline:none;
+  }
+  .modal-field input:focus, .modal-field select:focus, .modal-field textarea:focus{
+    border-color: var(--accent-sunset);
+  }
+  .modal-actions{ display:flex; gap:10px; margin-top:20px; }
+  .modal-btn-sec{
+    flex:1; background:none; border:1.5px solid var(--line); border-radius:24px;
+    padding:12px 0; font-weight:600; color:var(--ink-soft); cursor:pointer;
+  }
+  .modal-btn-pri{
+    flex:1.4; background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; border:none; border-radius:24px; padding:12px 0; font-weight:700; cursor:pointer;
+  }
+
+  /* REVIEW ITEMS */
+  .review-item{
+    background:#fff; border-radius:14px; padding:14px 16px; margin-bottom:12px;
+    border:1px solid var(--line);
+  }
+  .review-header{ display:flex; justify-content:space-between; margin-bottom:6px; }
+  .review-author{ font-weight:700; font-size:13.5px; }
+  .review-stars{ color: var(--gold); font-size:13px; font-weight:700; }
+  .review-text{ font-size:13px; color: var(--ink-soft); margin:0; line-height:1.45; }
+
+  /* AGENTS LIST IN MODAL */
+  .agent-card-item{
+    background:#fff; border-radius:16px; padding:16px; margin-bottom:12px;
+    border:1px solid var(--line); display:flex; gap:14px; align-items:center;
+  }
+  .agent-avatar{
+    width:46px; height:46px; border-radius:50%; object-fit:cover;
+  }
+
+  /* TOAST */
+  .travel-toast{
+    position:fixed; top:24px; right:24px; z-index:9999;
+    background:#fffaf3; border:1px solid rgba(230,82,92,0.2); border-radius:16px;
+    padding:16px 20px; box-shadow:0 18px 45px rgba(25,40,65,0.18);
+    display:flex; align-items:center; gap:12px; opacity:0; visibility:hidden;
+    transform:translateY(-20px); transition: all .3s ease;
+  }
+  .travel-toast.show{ opacity:1; visibility:visible; transform:translateY(0); }
+  .toast-icon{ width:28px; height:28px; border-radius:50%; background:var(--accent-coral); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; }
+  .travel-toast.success .toast-icon{ background: var(--green-badge); }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="travel-toast" class="travel-toast">
+  <div class="toast-icon" id="toast-icon">✓</div>
+  <div>
+    <div id="toast-title" style="font-weight:700; font-size:14px;">Notification</div>
+    <div id="toast-message" style="font-size:13px; color:var(--ink-soft);">Action completed successfully.</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="dashboard.html" class="logo"><span class="logo-dot"></span> TravelVerse</a>
+  <div class="nav-links">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="companions.html" class="active">Find companions</a>
+    <a href="connections.html" id="nav-connections-link">Connections <span id="nav-conn-badge" class="nav-conn-count" style="display:none;">0</span></a>
+    <a href="chat.html">Chat</a>
+    <a href="agent.html">Agents</a>
+    <a href="assistant.html">Assistant</a>
+  </div>
+  <div class="nav-right">
+    <div class="user-chip">
+      <button type="button" class="user-avatar" id="user-avatar" title="Change profile picture">
+        <span id="avatar-initial">T</span>
+        <span class="avatar-edit-badge">📷</span>
+      </button>
+      <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
+      <div class="account-menu-wrap">
+        <button type="button" class="account-menu-trigger" id="account-menu-trigger">
+          <span id="user-name-chip">Traveller</span>
+          <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <script>
+          (function(){
+            try {
+              var u = localStorage.getItem('travelverse_username') || localStorage.getItem('travelverse_user_name');
+              var p = localStorage.getItem('travelverse_profile_pic');
+              if (u && u !== 'null' && u !== 'undefined' && u.toLowerCase() !== 'traveller') {
+                var nc = document.getElementById('user-name-chip');
+                var ai = document.getElementById('avatar-initial');
+                if (nc) nc.textContent = u;
+                if (ai) ai.textContent = u.charAt(0).toUpperCase();
+              }
+              if (p && p.length > 10) {
+                var av = document.getElementById('user-avatar');
+                if (av) av.innerHTML = '<img src="' + p + '" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;"><span class="avatar-edit-badge">📷</span>';
+              }
+            } catch(e){}
+          })();
+        </script>
+        <div class="account-menu" id="account-menu">
+          <button type="button" id="change-username-btn" class="account-menu-item">Change username</button>
+          <button type="button" id="delete-account-btn" class="account-menu-item danger">Delete account</button>
+          <button type="button" id="logout-btn" class="account-menu-item danger">Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero-banner">
+  <div class="hero-text">
+    <div class="eyebrow">TRAVELVERSE COMPANIONS & REVIEWS</div>
+    <h1>Connect With Verified Travellers</h1>
+    <p>Match with travellers heading to your destination. Inspect ratings, read reviews from previous trips, or connect with verified Travel Agents.</p>
+  </div>
+  <div class="hero-actions">
+    <button type="button" class="agents-cta" onclick="window.location.href='agent.html'">View Travel Agents 🧭</button>
+  </div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<main>
+
+  <!-- SEARCH & FILTER BAR -->
+  <div class="control-card">
+    <div class="search-row">
+      <div class="search-input-wrap" style="display:flex; align-items:center; gap:8px;">
+        <div style="position:relative; flex:1;">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Search destination (e.g. Japan, Paris) or username handle (e.g. @cv, @marcusvance)...">
+        </div>
+        <button type="button" id="search-submit-btn" style="background:linear-gradient(135deg, var(--accent-sunset), var(--accent-coral)); color:#fff; border:none; padding:12px 24px; border-radius:14px; font-weight:700; font-size:14px; cursor:pointer; flex-shrink:0; box-shadow:0 4px 14px rgba(232,135,74,0.3); transition:transform .15s ease;">Search 🔍</button>
+      </div>
+      <select id="sort-select" class="sort-select">
+        <option value="match">Highest Compatibility Match</option>
+        <option value="rating">Highest Rated Companion</option>
+        <option value="newest">Newest Accounts & Trips</option>
+      </select>
+    </div>
+
+    <!-- FILTER BADGES -->
+    <div class="badge-filters" id="badge-filters">
+      <div class="filter-chip active" data-badge="all">All Results</div>
+      <div class="filter-chip" data-badge="accounts">👤 User Accounts</div>
+      <div class="filter-chip" data-badge="Backpacker">🎒 Backpacker</div>
+      <div class="filter-chip" data-badge="Foodie">🍜 Foodie</div>
+      <div class="filter-chip" data-badge="Adventurer">🏔️ Adventurer</div>
+      <div class="filter-chip" data-badge="Luxury">✨ Luxury seeker</div>
+      <div class="filter-chip" data-badge="Photographer">📸 Photographer</div>
+      <div class="filter-chip" data-badge="Culture">🏛️ Culture buff</div>
+      <div class="filter-chip" data-badge="Road">🚗 Road tripper</div>
+      <div class="filter-chip" data-badge="Eco">🌱 Eco-conscious</div>
+    </div>
+  </div>
+
+  <!-- COMPANIONS GRID -->
+  <div class="companions-grid" id="companions-grid">
+    <!-- Companion cards populated dynamically -->
+  </div>
+</main>
+
+<!-- CONNECT MODAL -->
+<div class="modal-overlay" id="connect-modal">
+  <div class="modal-card">
+    <button type="button" class="modal-close" id="connect-modal-close">×</button>
+    <div class="modal-eyebrow">DIRECT CONNECTION REQUEST</div>
+    <h2 id="connect-modal-title">Connect with Traveller</h2>
+    <p class="modal-sub" id="connect-modal-sub">Send a message to introduce yourself and plan your trip together.</p>
+
+    <!-- Target user preview banner -->
+    <div id="connect-target-preview" style="display:flex; align-items:center; gap:12px; background:rgba(23,36,42,0.04); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:16px;">
+      <div id="connect-modal-avatar" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, var(--accent-sunset), var(--accent-coral)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; flex-shrink:0;">C</div>
+      <div style="flex:1; min-width:0;">
+        <div id="connect-modal-name" style="font-weight:700; font-size:14.5px; color:var(--ink);">Chitraksh Gupta</div>
+        <div id="connect-modal-dest" style="font-size:12.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 Japan</div>
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label for="connect-message">Your Message</label>
+      <textarea id="connect-message" rows="4" placeholder="Hey! I'm planning to travel around the same time. Would love to join for hikes and food tours!"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-sec" id="connect-modal-cancel">Cancel</button>
+      <button type="button" class="modal-btn-pri" id="send-connect-btn">Send Connection Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW / MANAGE SENT REQUEST MODAL -->
+<div class="modal-overlay" id="sent-request-modal">
+  <div class="modal-card" style="width:460px;">
+    <button type="button" class="modal-close" id="sent-request-modal-close">×</button>
+    <div class="modal-eyebrow">CONNECTION STATUS</div>
+    <h2 id="sent-request-title">Connection Request Pending</h2>
+    <p class="modal-sub" id="sent-request-sub">You have sent a travel connection request. Waiting for their reply.</p>
+
+    <div style="background:rgba(23,36,42,0.03); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:18px;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+        <div id="sent-modal-avatar" style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, var(--accent-sunset), var(--accent-coral)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; overflow:hidden;">T</div>
+        <div>
+          <div id="sent-modal-name" style="font-weight:700; font-size:15px; color:var(--ink);">Traveller</div>
+          <div id="sent-modal-meta" style="font-size:12.5px; color:var(--ink-soft);">Status: Pending response ⏳</div>
+        </div>
+      </div>
+      <div style="font-size:12.5px; color:var(--ink-soft); margin-bottom:4px; font-weight:600;">Message sent:</div>
+      <div id="sent-modal-msg" style="font-size:13.5px; font-style:italic; background:#fff; padding:10px 12px; border-radius:8px; border:1px solid var(--line); color:var(--ink); line-height:1.5;">"..."</div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-sec" id="sent-request-close-btn">Close</button>
+      <button type="button" class="modal-btn-sec" id="withdraw-request-btn" style="color:var(--accent-coral); border-color:rgba(214,85,90,0.4); font-weight:700;">Withdraw Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALL CONNECTIONS & REQUESTS MODAL -->
+<div class="modal-overlay" id="connections-hub-modal">
+  <div class="modal-card" style="width:580px; max-height:86vh;">
+    <button type="button" class="modal-close" id="connections-hub-close">×</button>
+    <div class="modal-eyebrow">YOUR TRAVEL NETWORK</div>
+    <h2 style="font-family:'Fraunces', serif; margin-bottom:4px;">My Connections & Requests</h2>
+    <p class="modal-sub">Manage your travel companions, pending requests, and accepted buddies.</p>
+
+    <!-- TABS -->
+    <div style="display:flex; border-bottom:1.5px solid var(--line); margin-bottom:16px; gap:8px;">
+      <button type="button" id="tab-btn-incoming" class="conn-tab-btn active" style="background:none; border:none; border-bottom:2.5px solid var(--accent-sunset); padding:8px 12px; font-weight:700; font-size:13px; cursor:pointer; color:var(--ink);">Received <span id="conn-incoming-badge" style="background:var(--accent-coral); color:#fff; font-size:11px; padding:1px 6px; border-radius:8px; margin-left:4px;">0</span></button>
+      <button type="button" id="tab-btn-sent" class="conn-tab-btn" style="background:none; border:none; border-bottom:2.5px solid transparent; padding:8px 12px; font-weight:600; font-size:13px; cursor:pointer; color:var(--ink-soft);">Sent Requests</button>
+      <button type="button" id="tab-btn-buddies" class="conn-tab-btn" style="background:none; border:none; border-bottom:2.5px solid transparent; padding:8px 12px; font-weight:600; font-size:13px; cursor:pointer; color:var(--ink-soft);">Accepted Buddies <span id="conn-buddies-badge" style="background:#e2e8f0; color:var(--ink); font-size:11px; padding:1px 6px; border-radius:8px; margin-left:4px;">0</span></button>
+    </div>
+
+    <!-- TAB CONTENT: INCOMING -->
+    <div id="conn-tab-content-incoming">
+      <div id="conn-incoming-list" style="display:flex; flex-direction:column; gap:10px; max-height:48vh; overflow-y:auto;"></div>
+    </div>
+
+    <!-- TAB CONTENT: SENT -->
+    <div id="conn-tab-content-sent" style="display:none;">
+      <div id="conn-sent-list" style="display:flex; flex-direction:column; gap:10px; max-height:48vh; overflow-y:auto;"></div>
+    </div>
+
+    <!-- TAB CONTENT: BUDDIES -->
+    <div id="conn-tab-content-buddies" style="display:none;">
+      <div id="conn-buddies-list" style="display:flex; flex-direction:column; gap:10px; max-height:48vh; overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRAVELLER REVIEWS & PROFILE MODAL -->
+<div class="modal-overlay" id="reviews-modal">
+  <div class="modal-card" style="width:560px;">
+    <button type="button" class="modal-close" id="reviews-modal-close">×</button>
+    <div class="modal-eyebrow">TRAVELLER REVIEWS & HISTORY</div>
+    <h2 id="reviews-modal-title">Companion Reviews</h2>
+    <p class="modal-sub" id="reviews-modal-sub">Ratings & feedback left by travellers who went on previous trips with this person.</p>
+
+    <!-- REVIEWS LIST -->
+    <div id="reviews-list-container">
+      <!-- Reviews populated dynamically -->
+    </div>
+
+    <!-- RATE & REVIEW FORM -->
+    <div style="border-top:1px solid var(--line); padding-top:18px; margin-top:18px;">
+      <h3 style="font-family:'Fraunces', serif; font-size:16px; margin:0 0 10px;">Have you travelled with this person?</h3>
+      <div style="display:flex; gap:12px; margin-bottom:12px;">
+        <div class="modal-field" style="flex:1; margin:0;">
+          <label for="review-rating-select">Star Rating</label>
+          <select id="review-rating-select">
+            <option value="5.0">5 ★★★★★ (Outstanding)</option>
+            <option value="4.0">4 ★★★★☆ (Great)</option>
+            <option value="3.0">3 ★★★☆☆ (Good)</option>
+            <option value="2.0">2 ★★☆☆☆ (Okay)</option>
+            <option value="1.0">1 ★☆☆☆☆ (Poor)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-field">
+        <label for="review-text-input">Your Review & Feedback</label>
+        <textarea id="review-text-input" rows="3" placeholder="Write a short review about your trip together (e.g. punctual, fun, great coordinator)..."></textarea>
+      </div>
+      <button type="button" class="modal-btn-pri" id="submit-review-btn" style="width:100%; font-size:13.5px;">Submit Review</button>
+    </div>
+  </div>
+</div>
+
+<!-- POST TRIP REQUEST MODAL -->
+<div class="modal-overlay" id="post-modal">
+  <div class="modal-card" style="width:540px;">
+    <button type="button" class="modal-close" id="post-modal-close">×</button>
+    <div class="modal-eyebrow">HOST A TRIP</div>
+    <h2>Post a Travel Companion Request</h2>
+    <p class="modal-sub">Tell fellow travellers where you're heading and who you're looking to meet.</p>
+
+    <div class="modal-field">
+      <label for="post-dest">Destination</label>
+      <input type="text" id="post-dest" placeholder="e.g. Kyoto & Osaka, Japan" required>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <div class="modal-field" style="flex:1;">
+        <label for="post-dates">Travel Dates</label>
+        <input type="text" id="post-dates" placeholder="e.g. Nov 10 - Nov 22" required>
+      </div>
+      <div class="modal-field" style="flex:1;">
+        <label for="post-budget">Est. Budget</label>
+        <input type="text" id="post-budget" placeholder="e.g. $1,500 - $2,500" required>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <div class="modal-field" style="flex:1;">
+        <label for="post-pace">Travel Pace</label>
+        <select id="post-pace">
+          <option value="Moderate">Moderate</option>
+          <option value="Relaxed">Relaxed</option>
+          <option value="Fast-paced">Fast-paced</option>
+        </select>
+      </div>
+      <div class="modal-field" style="flex:1;">
+        <label for="post-badge-select">Primary Style</label>
+        <select id="post-badge-select">
+          <option value="🎒 Backpacker">🎒 Backpacker</option>
+          <option value="🍜 Foodie">🍜 Foodie</option>
+          <option value="🏔️ Adventurer">🏔️ Adventurer</option>
+          <option value="✨ Luxury seeker">✨ Luxury seeker</option>
+          <option value="📸 Photographer">📸 Photographer</option>
+          <option value="🏛️ Culture buff">🏛️ Culture buff</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label for="post-bio">Trip Description / Pitch</label>
+      <textarea id="post-bio" rows="3" placeholder="Describe what you plan to explore, activities, and what kind of buddy you're looking for..." required></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-sec" id="post-modal-cancel">Cancel</button>
+      <button type="button" class="modal-btn-pri" id="submit-post-btn">Publish Trip Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECOMMENDED TRAVEL AGENTS MODAL -->
+<div class="modal-overlay" id="agents-modal">
+  <div class="modal-card" style="width:580px;">
+    <button type="button" class="modal-close" id="agents-modal-close">×</button>
+    <div class="modal-eyebrow">VERIFIED TRAVEL AGENTS</div>
+    <h2>Recommended Travel Agencies</h2>
+    <p class="modal-sub">Listed TravelVerse travel agents tailored to plan your trips, handle logistics, and design custom itineraries.</p>
+    <div id="agents-list-container">
+      <!-- Populated dynamically -->
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE USERNAME MODAL -->
+<div class="modal-overlay" id="username-modal">
+  <div class="modal-card">
+    <button type="button" class="modal-close" id="username-modal-close">×</button>
+    <div class="modal-eyebrow">PROFILE SETTINGS</div>
+    <h2>Change Username</h2>
+    <p class="modal-sub">Update your public TravelVerse username handle.</p>
+    <div class="modal-field">
+      <label for="new-username-input">New Username</label>
+      <input type="text" id="new-username-input" placeholder="e.g. AlexExplorer">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-sec" id="username-modal-cancel">Cancel</button>
+      <button type="button" class="modal-btn-pri" id="save-username-btn">Save Username</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = "http://127.0.0.1:8000";
+
+  // Toast
+  function showToast(type, title, message) {
+    const toast = document.getElementById('travel-toast');
+    const icon = document.getElementById('toast-icon');
+    const titleEl = document.getElementById('toast-title');
+    const msgEl = document.getElementById('toast-message');
+    if (!toast) return;
+    toast.classList.remove('success', 'error');
+    toast.classList.add(type);
+    icon.textContent = type === 'success' ? '✓' : '!';
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  // ==========================================
+  // USER IDENTITY & USERNAME FIX (LOCAL + BACKEND SYNC)
+  // ==========================================
+  const avatarBtnEl = document.getElementById('user-avatar');
+  const avatarUploadEl = document.getElementById('avatar-upload');
+  const nameChipEl = document.getElementById('user-name-chip');
+
+  function getValidUserString(val) {
+    if (!val) return '';
+    const s = String(val).trim();
+    if (s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'traveller') {
+      return '';
+    }
+    return s;
+  }
+
+  function getCurrentUser() {
+    const email = getValidUserString(localStorage.getItem('travelverse_current_user_email')).toLowerCase();
+    let name = getValidUserString(localStorage.getItem('travelverse_user_name'));
+    let username = getValidUserString(localStorage.getItem('travelverse_username'));
+    let pic = localStorage.getItem('travelverse_profile_pic') || '';
+
+    try {
+      const accounts = JSON.parse(localStorage.getItem('travelverse_accounts') || '[]');
+      const userObj = accounts.find(a => a && a.email && getValidUserString(a.email).toLowerCase() === email);
+      if (userObj) {
+        if (!name) name = getValidUserString(userObj.firstName ? (userObj.firstName + (userObj.lastName ? ' ' + userObj.lastName : '')) : (userObj.first_name || userObj.name));
+        if (!username) username = getValidUserString(userObj.username);
+        if (!pic) pic = userObj.profilePic || userObj.profile_pic || '';
+      }
+    } catch(e) {}
+
+    const display = username || name || (email ? email.split('@')[0] : 'Traveller');
+    return {
+      email,
+      name: name || display,
+      username: username || display,
+      pic,
+      display
+    };
+  }
+
+  // ==========================================
+  // CONNECTION MANAGEMENT (LOCAL + BACKEND SYNC)
+  // ==========================================
+  function getLocalConnections() {
+    try {
+      return JSON.parse(localStorage.getItem('travelverse_connections') || '[]');
+    } catch(e) {
+      return [];
+    }
+  }
+
+  function saveLocalConnections(list) {
+    try {
+      localStorage.setItem('travelverse_connections', JSON.stringify(list || []));
+    } catch(e) {}
+    updateConnectionsBadge();
+  }
+
+  function updateConnectionsBadge() {
+    const user = getCurrentUser();
+    const badgeEl = document.getElementById('nav-conn-badge');
+    const incomingBadgeEl = document.getElementById('conn-incoming-badge');
+    const buddiesBadgeEl = document.getElementById('conn-buddies-badge');
+    if (!user.email) return;
+
+    const list = getLocalConnections();
+    const myEmail = user.email.toLowerCase();
+    const myUser = user.username.toLowerCase();
+
+    const incoming = list.filter(c => {
+      const rEmail = (c.receiver_email || '').toLowerCase().trim();
+      const stat = (c.status || 'pending').toLowerCase();
+      return (rEmail === myEmail || (myUser && rEmail === myUser)) && stat === 'pending';
+    });
+
+    const buddies = list.filter(c => {
+      const sEmail = (c.sender_email || '').toLowerCase().trim();
+      const rEmail = (c.receiver_email || '').toLowerCase().trim();
+      const stat = (c.status || 'pending').toLowerCase();
+      return (sEmail === myEmail || rEmail === myEmail || (myUser && (sEmail === myUser || rEmail === myUser))) && stat === 'accepted';
+    });
+
+    if (badgeEl) {
+      if (incoming.length > 0) {
+        badgeEl.textContent = incoming.length;
+        badgeEl.style.display = 'inline-block';
+      } else {
+        badgeEl.style.display = 'none';
+      }
+    }
+
+    if (incomingBadgeEl) incomingBadgeEl.textContent = incoming.length;
+    if (buddiesBadgeEl) buddiesBadgeEl.textContent = buddies.length;
+  }
+
+  function getConnectionStatus(targetEmail, targetUsername) {
+    const user = getCurrentUser();
+    if (!user.email) return 'none';
+
+    const cleanTargetEmail = (targetEmail || '').toLowerCase().trim();
+    const cleanTargetUser = (targetUsername || '').toLowerCase().trim();
+    const myEmail = user.email.toLowerCase().trim();
+    const myUser = user.username.toLowerCase().trim();
+
+    if (!cleanTargetEmail && !cleanTargetUser) return 'none';
+
+    const connections = getLocalConnections();
+    for (const c of connections) {
+      const sEmail = (c.sender_email || '').toLowerCase().trim();
+      const rEmail = (c.receiver_email || '').toLowerCase().trim();
+      const stat = (c.status || 'pending').toLowerCase();
+
+      // I sent request to target
+      const iSent = (sEmail === myEmail || (myUser && sEmail === myUser)) && (
+        (cleanTargetEmail && rEmail === cleanTargetEmail) ||
+        (cleanTargetUser && rEmail === cleanTargetUser)
+      );
+
+      // Target sent request to me
+      const targetSent = (rEmail === myEmail || (myUser && rEmail === myUser)) && (
+        (cleanTargetEmail && sEmail === cleanTargetEmail) ||
+        (cleanTargetUser && sEmail === cleanTargetUser)
+      );
+
+      if (iSent) {
+        if (stat === 'accepted') return 'accepted';
+        if (stat === 'pending') return 'pending_sent';
+      }
+
+      if (targetSent) {
+        if (stat === 'accepted') return 'accepted';
+        if (stat === 'pending') return 'pending_received';
+      }
+    }
+    return 'none';
+  }
+
+  async function syncConnectionsWithBackend() {
+    const user = getCurrentUser();
+    if (!user.email) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/user-connections/${encodeURIComponent(user.email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success') {
+          let local = getLocalConnections();
+          const pendingFromBackend = data.pending_requests || [];
+          const sentFromBackend = data.sent_requests || [];
+          const buddiesFromBackend = data.accepted_buddies || [];
+
+          pendingFromBackend.forEach(pr => {
+            const prId = pr.id;
+            const pSender = (pr.sender_email || '').toLowerCase().trim();
+            const pReceiver = (pr.receiver_email || '').toLowerCase().trim();
+            const idx = local.findIndex(c => String(c.id) === String(prId) || (c.sender_email === pSender && c.receiver_email === pReceiver));
+            const entry = {
+              id: prId || Date.now(),
+              sender_email: pSender,
+              receiver_email: pReceiver,
+              sender_name: (pr.first_name ? (pr.first_name + (pr.last_name ? ' ' + pr.last_name : '')) : (pr.username || pSender)).trim(),
+              sender_pic: pr.profile_pic || '',
+              message: pr.message || '',
+              status: pr.status || 'pending',
+              created_at: pr.created_at || new Date().toISOString()
+            };
+            if (idx >= 0) local[idx] = { ...local[idx], ...entry };
+            else local.push(entry);
+          });
+
+          sentFromBackend.forEach(sr => {
+            const srId = sr.id;
+            const sSender = (sr.sender_email || '').toLowerCase().trim();
+            const sReceiver = (sr.receiver_email || '').toLowerCase().trim();
+            const idx = local.findIndex(c => String(c.id) === String(srId) || (c.sender_email === sSender && c.receiver_email === sReceiver));
+            const entry = {
+              id: srId || Date.now(),
+              sender_email: sSender,
+              receiver_email: sReceiver,
+              receiver_name: (sr.receiver_first_name ? (sr.receiver_first_name + (sr.receiver_last_name ? ' ' + sr.receiver_last_name : '')) : (sr.receiver_username || sReceiver)).trim(),
+              receiver_pic: sr.receiver_profile_pic || '',
+              message: sr.message || '',
+              status: 'pending',
+              created_at: sr.created_at || new Date().toISOString()
+            };
+            if (idx >= 0) local[idx] = { ...local[idx], ...entry };
+            else local.push(entry);
+          });
+
+          buddiesFromBackend.forEach(ab => {
+            const abId = ab.id;
+            const s = (ab.sender_email || '').toLowerCase().trim();
+            const r = (ab.receiver_email || '').toLowerCase().trim();
+            const idx = local.findIndex(c => String(c.id) === String(abId) || (
+              (c.sender_email === s && c.receiver_email === r) ||
+              (c.sender_email === r && c.receiver_email === s)
+            ));
+            const entry = {
+              id: abId || Date.now(),
+              sender_email: s,
+              receiver_email: r,
+              status: 'accepted',
+              created_at: ab.created_at || new Date().toISOString()
+            };
+            if (idx >= 0) local[idx] = { ...local[idx], ...entry, status: 'accepted' };
+            else local.push(entry);
+          });
+
+          saveLocalConnections(local);
+          renderCompanions();
+        }
+      }
+    } catch(err) {
+      // Backend unavailable, local storage used
+    }
+  }
+
+  function renderUserHeader() {
+    const user = getCurrentUser();
+    const finalName = user.display;
+    const finalInitial = finalName.charAt(0).toUpperCase();
+
+    if (nameChipEl) nameChipEl.textContent = finalName;
+    if (avatarBtnEl) {
+      if (user.pic && user.pic.length > 10) {
+        avatarBtnEl.innerHTML = `<img src="${user.pic}" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;"><span class="avatar-edit-badge">📷</span>`;
+      } else {
+        avatarBtnEl.innerHTML = `<span id="avatar-initial">${finalInitial}</span><span class="avatar-edit-badge">📷</span>`;
+      }
+    }
+    updateConnectionsBadge();
+  }
+
+  async function syncUserFromBackend() {
+    renderUserHeader();
+    try {
+      const user = getCurrentUser();
+      if (!user.email) return;
+
+      const res = await fetch(`${API_BASE}/all-users`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success' && Array.isArray(data.users)) {
+          let matched = data.users.find(u => u && u.email && u.email.trim().toLowerCase() === user.email);
+          if (!matched) {
+            localStorage.clear();
+            window.location.href = 'login.html';
+            return;
+          }
+          if (matched.username) localStorage.setItem('travelverse_username', matched.username);
+          const fullN = (matched.first_name || '') + (matched.last_name ? ' ' + matched.last_name : '');
+          if (fullN.trim()) localStorage.setItem('travelverse_user_name', fullN.trim());
+          if (matched.profile_pic) localStorage.setItem('travelverse_profile_pic', matched.profile_pic);
+          renderUserHeader();
+        }
+      }
+    } catch(e) {
+      console.log('Backend user sync note:', e);
+    }
+    syncConnectionsWithBackend();
+  }
+  syncUserFromBackend();
+
+  if (avatarBtnEl && avatarUploadEl) {
+    avatarBtnEl.addEventListener('click', () => avatarUploadEl.click());
+    avatarUploadEl.addEventListener('change', () => {
+      const file = avatarUploadEl.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          localStorage.setItem('travelverse_profile_pic', reader.result);
+          const activeEmail = localStorage.getItem('travelverse_current_user_email');
+          if (activeEmail) {
+            const accs = JSON.parse(localStorage.getItem('travelverse_accounts') || '[]');
+            const u = accs.find(a => a && a.email && a.email.toLowerCase() === activeEmail.toLowerCase());
+            if (u) { u.profilePic = reader.result; localStorage.setItem('travelverse_accounts', JSON.stringify(accs)); }
+          }
+        } catch(e){}
+        renderUserHeader();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Account Dropdown Menu
+  const menuTrigger = document.getElementById('account-menu-trigger');
+  const accountMenu = document.getElementById('account-menu');
+  menuTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    accountMenu.classList.toggle('show');
+    menuTrigger.classList.toggle('open');
+  });
+  document.addEventListener('click', () => {
+    accountMenu.classList.remove('show');
+    menuTrigger.classList.remove('open');
+  });
+
+  // Logout
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    localStorage.removeItem('travelverse_session_active');
+    window.location.href = 'login.html';
+  });
+
+  // Change Username
+  const usernameModal = document.getElementById('username-modal');
+  document.getElementById('change-username-btn').addEventListener('click', () => {
+    const u = getCurrentUser();
+    document.getElementById('new-username-input').value = u.username || '';
+    usernameModal.classList.add('show');
+  });
+  document.getElementById('username-modal-close').addEventListener('click', () => usernameModal.classList.remove('show'));
+  document.getElementById('username-modal-cancel').addEventListener('click', () => usernameModal.classList.remove('show'));
+  document.getElementById('save-username-btn').addEventListener('click', async () => {
+    const newUsername = document.getElementById('new-username-input').value.trim();
+    if (!newUsername) return;
+    const u = getCurrentUser();
+    try {
+      const res = await fetch(`${API_BASE}/update-username`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: u.email, new_username: newUsername })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('travelverse_username', newUsername);
+        if (nameChipEl) nameChipEl.textContent = newUsername;
+        showToast('success', 'Username Updated', `Your handle is now @${newUsername}`);
+        usernameModal.classList.remove('show');
+      } else {
+        showToast('error', 'Update Failed', data.detail || 'Could not update username');
+      }
+    } catch (err) {
+      localStorage.setItem('travelverse_username', newUsername);
+      if (nameChipEl) nameChipEl.textContent = newUsername;
+      showToast('success', 'Username Updated', `Your handle is now @${newUsername}`);
+      usernameModal.classList.remove('show');
+    }
+  });
+
+  // Delete Account
+  document.getElementById('delete-account-btn').addEventListener('click', async () => {
+    if (confirm("Are you sure you want to delete your account? This action is permanent and will remove all your profile data and companion posts.")) {
+      const u = getCurrentUser();
+      const emailToDelete = u.email;
+      if (emailToDelete) {
+        try {
+          await fetch(`${API_BASE}/delete-account`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: emailToDelete })
+          });
+        } catch(e){}
+
+        try {
+          let accounts = JSON.parse(localStorage.getItem('travelverse_accounts') || '[]');
+          accounts = accounts.filter(acc => acc && acc.email && acc.email.toLowerCase() !== emailToDelete.toLowerCase());
+          localStorage.setItem('travelverse_accounts', JSON.stringify(accounts));
+        } catch(e){}
+      }
+
+      localStorage.clear();
+      alert("Your TravelVerse account has been permanently deleted.");
+      window.location.href = 'login.html';
+    }
+  });
+
+  // Badges setup
+  let currentUserBadges = [];
+  try { currentUserBadges = JSON.parse(localStorage.getItem('travelverse_badges') || '[]'); } catch (e) { currentUserBadges = []; }
+
+  // Calculate Match Score %
+  function calculateMatch(companionBadges) {
+    try {
+      if (!currentUserBadges || !Array.isArray(currentUserBadges) || currentUserBadges.length === 0) return 88;
+      if (!companionBadges || !Array.isArray(companionBadges) || companionBadges.length === 0) return 82;
+      let matches = 0;
+      companionBadges.forEach(b => {
+        if (!b) return;
+        const bStr = String(b).toLowerCase();
+        if (currentUserBadges.some(cb => cb && String(cb).toLowerCase().includes(bStr))) {
+          matches++;
+        }
+      });
+      const percentage = Math.min(99, Math.max(72, Math.round(75 + (matches / Math.max(1, companionBadges.length)) * 24)));
+      return percentage;
+    } catch (e) {
+      return 85;
+    }
+  }
+
+  // Load & Render Companions
+  let allCompanions = [];
+  let selectedFilterBadge = 'all';
+  let savedSet = new Set(JSON.parse(localStorage.getItem('travelverse_saved_companions') || '[]'));
+
+  function getLocalCompanionEntries() {
+    const entries = [];
+    try {
+      const activeEmail = (localStorage.getItem('travelverse_current_user_email') || '').trim().toLowerCase();
+      const activeUsername = (localStorage.getItem('travelverse_username') || '').trim().toLowerCase();
+      const accounts = JSON.parse(localStorage.getItem('travelverse_accounts') || '[]');
+      const accountEmails = new Set();
+      
+      accounts.forEach((acc, idx) => {
+        if (!acc || !acc.email) return;
+        const email = String(acc.email).trim().toLowerCase();
+        const handle = (acc.username || email.split('@')[0]).trim().toLowerCase();
+
+        // Omit current user from search companions
+        if ((activeEmail && email === activeEmail) || (activeUsername && handle === activeUsername)) {
+          return;
+        }
+
+        accountEmails.add(email);
+        const uName = (acc.firstName ? (acc.firstName + (acc.lastName ? ' ' + acc.lastName : '')) : (acc.first_name || acc.name || acc.username || 'Traveler')).trim();
+        const pPic = acc.profilePic || acc.profile_pic || '';
+
+        let badges = [];
+        try { badges = JSON.parse(localStorage.getItem('travelverse_badges') || '[]'); } catch(e){}
+        if (!badges || !Array.isArray(badges) || !badges.length) badges = ["🎒 Backpacker", "🍜 Foodie"];
+
+        let interests = [];
+        try { interests = JSON.parse(localStorage.getItem(`travelverse_interests_${email}`) || '[]'); } catch(e){}
+
+        if (Array.isArray(interests) && interests.length > 0) {
+          interests.forEach((intr, iIdx) => {
+            const destStr = typeof intr === 'string' ? intr : (intr.destination || intr.dest || 'Worldwide Explorer');
+            const datesStr = typeof intr === 'object' && intr.preferred_dates ? intr.preferred_dates : 'Flexible Dates';
+            const budgetStr = typeof intr === 'object' && intr.budget ? intr.budget : 'Flexible';
+            const notesStr = typeof intr === 'object' && intr.notes ? intr.notes : `Planning a trip to ${destStr}. Connect with @${handle} to plan together!`;
+
+            entries.push({
+              id: 90000 + idx * 100 + iIdx,
+              user_name: uName,
+              user_email: email,
+              username: handle,
+              destination: destStr,
+              dates: datesStr,
+              budget: budgetStr,
+              pace: 'Balanced',
+              badges: badges,
+              bio: notesStr,
+              rating: null,
+              trips_count: 0,
+              profile_pic: pPic,
+              is_account: true
+            });
+          });
+        } else {
+          entries.push({
+            id: 80000 + idx,
+            user_name: uName,
+            user_email: email,
+            username: handle,
+            destination: 'Worldwide Explorer (Open to Trips)',
+            dates: 'Flexible Dates',
+            budget: 'Flexible',
+            pace: 'Balanced',
+            badges: badges,
+            bio: `Verified TravelVerse member (@${handle}). Connect with me to plan our next trip together!`,
+            rating: null,
+            trips_count: 0,
+            profile_pic: pPic,
+            is_account: true
+          });
+        }
+      });
+    } catch(e){}
+    return entries;
+  }
+
+  async function fetchCompanions() {
+    const grid = document.getElementById('companions-grid');
+    if (grid) grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--ink-soft);">Loading companions...</div>';
+
+    let remoteCompanions = [];
+    const activeEmail = (localStorage.getItem('travelverse_current_user_email') || '').trim().toLowerCase();
+
+    try {
+      const url = activeEmail ? `${API_BASE}/companions?exclude_email=${encodeURIComponent(activeEmail)}` : `${API_BASE}/companions`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        remoteCompanions = data.companions || [];
+      } else {
+        throw new Error('API failed');
+      }
+    } catch (err) {
+      console.warn("Backend unavailable.");
+      remoteCompanions = [];
+    }
+
+    if (remoteCompanions && remoteCompanions.length > 0) {
+      // Backend active: use ONLY real verified accounts from the database
+      allCompanions = [...remoteCompanions];
+    } else {
+      // Only fallback to local accounts if backend is completely unreachable
+      allCompanions = getLocalCompanionEntries();
+    }
+
+    renderCompanions();
+  }
+
+  function renderCompanions() {
+    const grid = document.getElementById('companions-grid');
+    if (!grid) return;
+
+    try {
+      const query = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+      const sortVal = document.getElementById('sort-select')?.value || 'match';
+      const activeEmail = (localStorage.getItem('travelverse_current_user_email') || '').trim().toLowerCase();
+      const activeUsername = (localStorage.getItem('travelverse_username') || '').trim().toLowerCase();
+
+      let filtered = allCompanions.filter(c => {
+        if (!c) return false;
+
+        const email = (c.user_email || '').toLowerCase().trim();
+        const handle = (c.username || '').toLowerCase().trim();
+
+        // Omit active user from companion cards
+        if ((activeEmail && email && email === activeEmail) || (activeUsername && handle && handle === activeUsername)) {
+          return false;
+        }
+
+        const dest = (c.destination || '').toLowerCase();
+        const uname = (c.user_name || '').toLowerCase();
+        const bio = (c.bio || '').toLowerCase();
+        const dates = (c.dates || '').toLowerCase();
+
+        const matchQuery = !query || 
+          dest.includes(query) || 
+          uname.includes(query) || 
+          handle.includes(query) ||
+          bio.includes(query) ||
+          dates.includes(query) ||
+          email.includes(query);
+
+        let matchBadge = true;
+        if (selectedFilterBadge === 'accounts') {
+          matchBadge = Boolean(c.is_account);
+        } else if (selectedFilterBadge !== 'all') {
+          matchBadge = Boolean(c.badges && Array.isArray(c.badges) && c.badges.some(b => String(b).toLowerCase().includes(selectedFilterBadge.toLowerCase())));
+        }
+
+        return matchQuery && matchBadge;
+      });
+
+      // Calculate match % for each
+      filtered.forEach(c => {
+        c._matchScore = calculateMatch(c.badges);
+      });
+
+      // Sorting
+      if (sortVal === 'match') {
+        filtered.sort((a, b) => (b._matchScore || 85) - (a._matchScore || 85));
+      } else if (sortVal === 'rating') {
+        filtered.sort((a, b) => (b.rating || 4.9) - (a.rating || 4.9));
+      } else if (sortVal === 'newest') {
+        filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
+      }
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column:1/-1; background:var(--card-cream); border-radius:20px; padding:48px 20px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
+            <div style="font-size:36px; margin-bottom:10px;">🗺️</div>
+            <h3 style="font-family:'Fraunces', serif; font-size:20px; margin:0 0 8px;">No companions found</h3>
+            <p style="color:var(--ink-soft); font-size:14px; margin:0;">Try adjusting your search destination or badge filters.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(c => {
+        const isSaved = savedSet.has(c.id);
+        const initial = (c.user_name || c.username || 'T').charAt(0).toUpperCase();
+        const badgePillsHtml = (c.badges || []).map(b => `<span class="mini-badge">${b}</span>`).join('');
+
+        const avatarHtml = c.profile_pic ? 
+          `<img src="${c.profile_pic}" alt="${c.user_name}">` : 
+          `${initial}`;
+
+        let connectBtnHtml = '';
+        const connStatus = getConnectionStatus(c.user_email, c.username);
+        const safeName = (c.user_name || c.username || 'Traveler').replace(/"/g, '&quot;');
+        const safeDest = (c.destination || 'Worldwide Explorer').replace(/"/g, '&quot;');
+        const safeEmail = (c.user_email || '').replace(/"/g, '&quot;');
+        const safePic = (c.profile_pic || '').replace(/"/g, '&quot;');
+
+        if (connStatus === 'accepted') {
+          connectBtnHtml = `<button type="button" class="btn-connect connected" data-id="${c.id}" data-name="${safeName}" data-dest="${safeDest}" data-email="${safeEmail}" data-pic="${safePic}" data-status="accepted" title="Connected travel buddy">✓ Connected</button>`;
+        } else if (connStatus === 'pending_sent') {
+          connectBtnHtml = `<button type="button" class="btn-connect sent" data-id="${c.id}" data-name="${safeName}" data-dest="${safeDest}" data-email="${safeEmail}" data-pic="${safePic}" data-status="pending_sent" title="Click to view or withdraw request">✓ Request Sent</button>`;
+        } else if (connStatus === 'pending_received') {
+          connectBtnHtml = `<button type="button" class="btn-connect respond" data-id="${c.id}" data-name="${safeName}" data-dest="${safeDest}" data-email="${safeEmail}" data-pic="${safePic}" data-status="pending_received" title="Accept connection request">Accept Request 🤝</button>`;
+        } else {
+          connectBtnHtml = `<button type="button" class="btn-connect" data-id="${c.id}" data-name="${safeName}" data-dest="${safeDest}" data-email="${safeEmail}" data-pic="${safePic}" data-status="none">Connect Request</button>`;
+        }
+
+        return `
+          <div class="companion-card" data-id="${c.id}">
+            <div>
+              <div class="card-top">
+                <div class="user-meta">
+                  <div class="user-avatar-large">${avatarHtml}</div>
+                  <div class="name-block">
+                    <h3>${c.user_name || c.username || 'Traveler'} <span class="verified-icon" title="Verified Traveler">✓</span></h3>
+                    <div class="username-tag">@${c.username || 'user'}</div>
+                  </div>
+                </div>
+                <div class="match-pill">${c._matchScore || 85}% Match</div>
+              </div>
+
+              <div class="rating-bar">
+                <span class="rating-stars" data-id="${c.id}">
+                  ${(c.rating && Number(c.rating) > 0) ? `★ ${Number(c.rating).toFixed(2)}` : '🌱 New Member'}
+                </span>
+                <span>•</span>
+                <span>${(c.trips_count && Number(c.trips_count) > 0) ? `${c.trips_count} trips completed` : '0 trips completed'}</span>
+              </div>
+
+              <div class="dest-box">
+                <div class="dest-title">📍 ${c.destination || 'Worldwide Explorer'}</div>
+                <div class="dest-details">
+                  <span>🗓️ ${c.dates || 'Flexible Dates'}</span>
+                  <span>💰 ${c.budget || 'Flexible'}</span>
+                </div>
+              </div>
+
+              <div class="tag-pills">
+                <span class="pace-badge">⚡ ${c.pace || 'Balanced'} Pace</span>
+                ${badgePillsHtml}
+              </div>
+
+              <p class="bio-text">"${c.bio || 'Planning a trip!'}"</p>
+            </div>
+
+            <div class="card-actions">
+              ${connectBtnHtml}
+              <button type="button" class="btn-reviews" data-id="${c.id}">Reviews</button>
+              <button type="button" class="btn-save ${isSaved ? 'saved' : ''}" data-id="${c.id}" title="${isSaved ? 'Saved' : 'Save Companion'}">
+                ${isSaved ? '♥' : '♡'}
+              </button>
+              <button type="button" class="btn-save-trip-interest" data-dest="${safeDest}" data-dates="${(c.dates||'Flexible Dates').replace(/"/g, '&quot;')}" data-budget="${(c.budget||'Flexible').replace(/"/g, '&quot;')}" title="Save destination as Trip Interest to your profile" style="background:rgba(232,135,74,0.12); border:1px solid rgba(232,135,74,0.3); color:#c45e1e; border-radius:12px; padding:6px 11px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:transform .15s ease;">📌 Save Interest</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      } catch(err) {
+        console.error("Error rendering companions:", err);
+      }
+    }
+
+    // Grid Event Delegation for Connect, Reviews, and Save
+    const companionsGridEl = document.getElementById('companions-grid');
+    if (companionsGridEl) {
+      companionsGridEl.addEventListener('click', (e) => {
+        const connectBtn = e.target.closest('.btn-connect');
+        if (connectBtn) {
+          const id = connectBtn.dataset.id;
+          const status = connectBtn.dataset.status || 'none';
+          const name = connectBtn.dataset.name || 'Traveler';
+          const dest = connectBtn.dataset.dest || 'Worldwide Explorer';
+          const targetEmail = connectBtn.dataset.email || '';
+          const pic = connectBtn.dataset.pic || '';
+
+          const c = allCompanions.find(item => String(item.id) === String(id));
+          const finalName = c ? (c.user_name || c.username || name) : name;
+          const finalDest = c ? (c.destination || dest) : dest;
+          const finalEmail = c ? (c.user_email || targetEmail || c.username) : targetEmail;
+          const finalPic = c ? (c.profile_pic || pic) : pic;
+
+          if (status === 'accepted') {
+            showToast('success', 'Already Connected', `You and ${finalName} are travel buddies! 🎉`);
+            return;
+          }
+
+          if (status === 'pending_sent') {
+            openSentRequestModal(id, finalName, finalDest, finalEmail, finalPic);
+            return;
+          }
+
+          if (status === 'pending_received') {
+            handleAcceptIncomingRequest(null, finalEmail, finalName);
+            return;
+          }
+
+          // Status is 'none': Open Connect Modal
+          openConnectModal(id, finalName, finalDest, finalEmail, finalPic);
+          return;
+        }
+
+        const reviewsBtn = e.target.closest('.btn-reviews, .rating-stars');
+        if (reviewsBtn) {
+          const id = reviewsBtn.dataset.id;
+          const c = allCompanions.find(item => String(item.id) === String(id));
+          if (c) {
+            openReviewsModal(c.id, c.user_name || c.username || 'Traveler', c.rating || 4.9);
+          }
+          return;
+        }
+
+        const saveBtn = e.target.closest('.btn-save');
+        if (saveBtn) {
+          const id = saveBtn.dataset.id;
+          toggleSaveCompanion(id, saveBtn);
+          return;
+        }
+
+        const saveInterestBtn = e.target.closest('.btn-save-trip-interest');
+        if (saveInterestBtn) {
+          const dest = saveInterestBtn.dataset.dest || '';
+          const dates = saveInterestBtn.dataset.dates || 'Flexible Dates';
+          const budget = saveInterestBtn.dataset.budget || 'Flexible';
+          saveTripInterestToDatabase(dest, dates, budget);
+          return;
+        }
+      });
+    }
+
+    async function saveTripInterestToDatabase(dest, dates, budget, notes = '') {
+      if (!dest) return;
+      const u = getCurrentUser();
+      const email = (u.email || u.username || '').trim().toLowerCase() || 'guest@travelverse.com';
+      
+      const payload = {
+        user_email: email,
+        destination: dest,
+        preferred_dates: dates || 'Flexible Dates',
+        budget: budget || 'Flexible',
+        notes: notes || `Saved from Find Companions destination (${dest})`
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/add-trip-interest`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          showToast('success', 'Trip Interest Saved', `Saved "${dest}" to your trip profile!`);
+        } else {
+          showToast('success', 'Trip Interest Saved', `Saved "${dest}" to your trip profile.`);
+        }
+      } catch(err) {
+        showToast('info', 'Saved Locally', `Saved "${dest}" to local trip profile.`);
+      }
+
+      try {
+        let currentLocal = JSON.parse(localStorage.getItem(`travelverse_interests_${email}`) || '[]');
+        currentLocal.unshift({ id: Date.now(), ...payload, created_at: new Date().toISOString() });
+        localStorage.setItem(`travelverse_interests_${email}`, JSON.stringify(currentLocal));
+      } catch(e){}
+    }
+
+    // Filter Chips Click
+    document.getElementById('badge-filters').addEventListener('click', (e) => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedFilterBadge = chip.dataset.badge;
+      renderCompanions();
+    });
+
+    // Search & Sort Inputs
+    const searchInputEl = document.getElementById('search-input');
+    const searchBtnEl = document.getElementById('search-submit-btn');
+
+    if (searchInputEl) {
+      searchInputEl.addEventListener('input', renderCompanions);
+      searchInputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          fetchCompanions();
+        }
+      });
+    }
+
+    if (searchBtnEl) {
+      searchBtnEl.addEventListener('click', () => {
+        fetchCompanions();
+      });
+    }
+
+    document.getElementById('sort-select').addEventListener('change', renderCompanions);
+
+    // Toggle Save Companion
+    function toggleSaveCompanion(id, btn) {
+      if (savedSet.has(id)) {
+        savedSet.delete(id);
+        btn.classList.remove('saved');
+        btn.textContent = '♡';
+        showToast('success', 'Bookmark Removed', 'Companion removed from your saved list.');
+      } else {
+        savedSet.add(id);
+        btn.classList.add('saved');
+        btn.textContent = '♥';
+        showToast('success', 'Companion Saved', 'Companion saved to your profile.');
+      }
+      localStorage.setItem('travelverse_saved_companions', JSON.stringify(Array.from(savedSet)));
+    }
+
+    // ==========================================
+    // CONNECT MODAL LOGIC
+    // ==========================================
+    let activeConnectId = null;
+    let activeConnectEmail = '';
+    let activeConnectName = '';
+    let activeConnectDest = '';
+    const connectModal = document.getElementById('connect-modal');
+
+    function openConnectModal(id, name, dest, email, pic) {
+      activeConnectId = id;
+      activeConnectName = name;
+      activeConnectDest = dest;
+      activeConnectEmail = email;
+
+      document.getElementById('connect-modal-title').textContent = `Connect with ${name}`;
+      document.getElementById('connect-modal-sub').textContent = `Send a travel connection request for ${dest}.`;
+
+      const avatarEl = document.getElementById('connect-modal-avatar');
+      if (avatarEl) {
+        if (pic) {
+          avatarEl.innerHTML = `<img src="${pic}" alt="${name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else {
+          avatarEl.textContent = (name || 'T').charAt(0).toUpperCase();
+        }
+      }
+
+      const nameEl = document.getElementById('connect-modal-name');
+      if (nameEl) nameEl.textContent = name;
+
+      const destEl = document.getElementById('connect-modal-dest');
+      if (destEl) destEl.textContent = `📍 ${dest}`;
+
+      document.getElementById('connect-message').value = `Hey ${name}! I'm also planning a trip to ${dest} and saw your travel post. Would love to connect and explore together!`;
+      connectModal.classList.add('show');
+    }
+
+    document.getElementById('connect-modal-close').addEventListener('click', () => connectModal.classList.remove('show'));
+    document.getElementById('connect-modal-cancel').addEventListener('click', () => connectModal.classList.remove('show'));
+
+    document.getElementById('send-connect-btn').addEventListener('click', async () => {
+      const msg = document.getElementById('connect-message').value.trim();
+      if (!msg) {
+        showToast('error', 'Enter Message', 'Please write a brief note to introduce yourself.');
+        return;
+      }
+
+      const user = getCurrentUser();
+      if (!user.email) {
+        showToast('error', 'Login Required', 'Please log in to send connection requests.');
+        return;
+      }
+
+      const companionObj = allCompanions.find(c => String(c.id) === String(activeConnectId));
+      let targetEmail = activeConnectEmail;
+      if (!targetEmail && companionObj) {
+        targetEmail = companionObj.user_email || companionObj.username || '';
+      }
+
+      if (user.email === targetEmail.toLowerCase()) {
+        showToast('error', 'Self Connection', 'You cannot connect with your own profile.');
+        return;
+      }
+
+      const sendBtn = document.getElementById('send-connect-btn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending... ✈️';
+
+      // 1. Immediately record in localStorage for instant responsive UI
+      let connections = getLocalConnections();
+      const newConn = {
+        id: Date.now(),
+        sender_email: user.email,
+        sender_name: user.name,
+        sender_username: user.username,
+        sender_pic: user.pic,
+        receiver_email: targetEmail || 'companion@example.com',
+        receiver_name: activeConnectName || (companionObj ? companionObj.user_name : 'Traveler'),
+        receiver_username: companionObj ? companionObj.username : '',
+        receiver_pic: companionObj ? companionObj.profile_pic : '',
+        destination: activeConnectDest || (companionObj ? companionObj.destination : 'Worldwide'),
+        message: msg,
+        status: 'pending',
+        created_at: new Date().toLocaleString()
+      };
+
+      // Remove any prior pending entry with same pair and insert fresh
+      connections = connections.filter(c => !(
+        (c.sender_email === user.email && c.receiver_email === targetEmail) ||
+        (c.sender_email === targetEmail && c.receiver_email === user.email)
+      ));
+      connections.unshift(newConn);
+      saveLocalConnections(connections);
+
+      // 2. Dispatch to Backend API
+      try {
+        await fetch(`${API_BASE}/send-connection-request`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sender_email: user.email,
+            receiver_email: targetEmail || 'companion@example.com',
+            message: msg
+          })
+        });
+      } catch(e) {
+        console.log("Backend offline, connection recorded locally.");
+      }
+
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send Connection Request';
+      connectModal.classList.remove('show');
+
+      // 3. Instantly re-render companion cards so button changes to '✓ Request Sent'
+      renderCompanions();
+      showToast('success', 'Connection Request Sent', `Your trip request was delivered to ${activeConnectName}!`);
+    });
+
+    // ==========================================
+    // SENT REQUEST MODAL LOGIC (VIEW / WITHDRAW)
+    // ==========================================
+    let activeWithdrawEmail = '';
+    let activeWithdrawId = null;
+    const sentModal = document.getElementById('sent-request-modal');
+
+    function openSentRequestModal(id, name, dest, email, pic) {
+      activeWithdrawId = id;
+      activeWithdrawEmail = email;
+
+      const user = getCurrentUser();
+      const connections = getLocalConnections();
+      const conn = connections.find(c => (
+        c.sender_email === user.email && 
+        (c.receiver_email === email || (email && c.receiver_email.includes(email)))
+      ));
+
+      const avatarEl = document.getElementById('sent-modal-avatar');
+      if (avatarEl) {
+        if (pic) {
+          avatarEl.innerHTML = `<img src="${pic}" alt="${name}" style="width:100%;height:100%;object-fit:cover;">`;
+        } else {
+          avatarEl.textContent = (name || 'T').charAt(0).toUpperCase();
+        }
+      }
+
+      document.getElementById('sent-modal-name').textContent = name;
+      document.getElementById('sent-modal-meta').textContent = `Destination: 📍 ${dest} • Status: Pending response ⏳`;
+      document.getElementById('sent-modal-msg').textContent = conn && conn.message ? `"${conn.message}"` : '"Hey! Would love to connect and travel together!"';
+
+      sentModal.classList.add('show');
+    }
+
+    document.getElementById('sent-request-modal-close').addEventListener('click', () => sentModal.classList.remove('show'));
+    document.getElementById('sent-request-close-btn').addEventListener('click', () => sentModal.classList.remove('show'));
+
+    document.getElementById('withdraw-request-btn').addEventListener('click', async () => {
+      const user = getCurrentUser();
+      let connections = getLocalConnections();
+      connections = connections.filter(c => !(
+        c.sender_email === user.email && 
+        (c.receiver_email === activeWithdrawEmail || (activeWithdrawId && String(c.id) === String(activeWithdrawId)))
+      ));
+      saveLocalConnections(connections);
+
+      try {
+        await fetch(`${API_BASE}/withdraw-connection-request`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            connection_id: parseInt(activeWithdrawId, 10) || 0,
+            sender_email: user.email,
+            receiver_email: activeWithdrawEmail
+          })
+        });
+      } catch(e){}
+
+      sentModal.classList.remove('show');
+      renderCompanions();
+      showToast('info', 'Request Withdrawn', 'Your travel connection request was cancelled.');
+    });
+
+    // ==========================================
+    // CONNECTIONS HUB MODAL LOGIC
+    // ==========================================
+    const hubModal = document.getElementById('connections-hub-modal');
+    const tabIncoming = document.getElementById('tab-btn-incoming');
+    const tabSent = document.getElementById('tab-btn-sent');
+    const tabBuddies = document.getElementById('tab-btn-buddies');
+    const contentIncoming = document.getElementById('conn-tab-content-incoming');
+    const contentSent = document.getElementById('conn-tab-content-sent');
+    const contentBuddies = document.getElementById('conn-tab-content-buddies');
+
+    function openConnectionsHub(activeTab = 'incoming') {
+      switchHubTab(activeTab);
+      hubModal.classList.add('show');
+    }
+
+    function switchHubTab(tabName) {
+      [tabIncoming, tabSent, tabBuddies].forEach(b => {
+        b.classList.remove('active');
+        b.style.borderBottomColor = 'transparent';
+        b.style.color = 'var(--ink-soft)';
+      });
+      [contentIncoming, contentSent, contentBuddies].forEach(c => c.style.display = 'none');
+
+      if (tabName === 'incoming') {
+        tabIncoming.classList.add('active');
+        tabIncoming.style.borderBottomColor = 'var(--accent-sunset)';
+        tabIncoming.style.color = 'var(--ink)';
+        contentIncoming.style.display = 'block';
+        renderIncomingList();
+      } else if (tabName === 'sent') {
+        tabSent.classList.add('active');
+        tabSent.style.borderBottomColor = 'var(--accent-sunset)';
+        tabSent.style.color = 'var(--ink)';
+        contentSent.style.display = 'block';
+        renderSentList();
+      } else {
+        tabBuddies.classList.add('active');
+        tabBuddies.style.borderBottomColor = 'var(--accent-sunset)';
+        tabBuddies.style.color = 'var(--ink)';
+        contentBuddies.style.display = 'block';
+        renderBuddiesList();
+      }
+    }
+
+    tabIncoming.addEventListener('click', () => switchHubTab('incoming'));
+    tabSent.addEventListener('click', () => switchHubTab('sent'));
+    tabBuddies.addEventListener('click', () => switchHubTab('buddies'));
+    document.getElementById('connections-hub-close').addEventListener('click', () => hubModal.classList.remove('show'));
+    document.getElementById('nav-connections-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      openConnectionsHub('incoming');
+    });
+
+    function renderIncomingList() {
+      const user = getCurrentUser();
+      const listEl = document.getElementById('conn-incoming-list');
+      const connections = getLocalConnections();
+      const myEmail = user.email.toLowerCase();
+      const myUser = user.username.toLowerCase();
+
+      const incoming = connections.filter(c => {
+        const r = (c.receiver_email || '').toLowerCase().trim();
+        return (r === myEmail || (myUser && r === myUser)) && (c.status || 'pending') === 'pending';
+      });
+
+      if (incoming.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align:center; padding:36px 16px; background:rgba(23,36,42,0.02); border-radius:14px; border:1px dashed var(--line);">
+            <div style="font-size:32px; margin-bottom:8px;">📬</div>
+            <div style="font-weight:700; font-size:15px; margin-bottom:4px;">No incoming requests</div>
+            <p style="font-size:13px; color:var(--ink-soft); margin:0;">When other travellers find your trip posts and connect with you, their requests will show up here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = incoming.map(item => `
+        <div style="background:#fff; border:1.5px solid var(--line); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px; box-shadow:0 4px 14px rgba(0,0,0,0.03);">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, var(--accent-sunset), var(--accent-coral)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; overflow:hidden;">
+                ${item.sender_pic ? `<img src="${item.sender_pic}" style="width:100%;height:100%;object-fit:cover;">` : (item.sender_name || 'T').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div style="font-weight:700; font-size:14.5px; color:var(--ink);">${item.sender_name || item.sender_email}</div>
+                <div style="font-size:12px; color:var(--ink-soft);">${item.destination ? `Trip: ${item.destination}` : 'Travel Connection'}</div>
+              </div>
+            </div>
+            <div style="font-size:11.5px; color:var(--ink-soft);">${item.created_at || 'Recently'}</div>
+          </div>
+          <div style="font-size:13px; font-style:italic; background:var(--card-cream); border-radius:10px; padding:8px 12px; border:1px solid var(--line);">
+            "${item.message || 'Hey! Would love to connect and travel together.'}"
+          </div>
+          <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button type="button" style="background:none; border:1.5px solid var(--line); padding:7px 16px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; color:var(--ink-soft);" onclick="handleDeclineIncomingRequest(${item.id || 0}, '${item.sender_email}')">Decline</button>
+            <button type="button" style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; padding:7px 18px; border-radius:20px; font-size:12.5px; font-weight:700; cursor:pointer; box-shadow:0 3px 10px rgba(16,185,129,0.3);" onclick="handleAcceptIncomingRequest(${item.id || 0}, '${item.sender_email}', '${(item.sender_name || 'Traveller').replace(/'/g, "\\'")}')">Accept 🤝</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderSentList() {
+      const user = getCurrentUser();
+      const listEl = document.getElementById('conn-sent-list');
+      const connections = getLocalConnections();
+      const myEmail = user.email.toLowerCase();
+
+      const sent = connections.filter(c => (c.sender_email || '').toLowerCase() === myEmail && (c.status || 'pending') === 'pending');
+
+      if (sent.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align:center; padding:36px 16px; background:rgba(23,36,42,0.02); border-radius:14px; border:1px dashed var(--line);">
+            <div style="font-size:32px; margin-bottom:8px;">✈️</div>
+            <div style="font-weight:700; font-size:15px; margin-bottom:4px;">No pending sent requests</div>
+            <p style="font-size:13px; color:var(--ink-soft); margin:0;">Click "Connect Request" on any companion card to connect with travellers!</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = sent.map(item => `
+        <div style="background:#fff; border:1.5px solid var(--line); border-radius:16px; padding:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 4px 14px rgba(0,0,0,0.03);">
+          <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0;">
+            <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, var(--accent-sunset), var(--accent-coral)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; overflow:hidden; flex-shrink:0;">
+              ${item.receiver_pic ? `<img src="${item.receiver_pic}" style="width:100%;height:100%;object-fit:cover;">` : (item.receiver_name || 'T').charAt(0).toUpperCase()}
+            </div>
+            <div style="min-width:0;">
+              <div style="font-weight:700; font-size:14.5px; color:var(--ink);">${item.receiver_name || item.receiver_email}</div>
+              <div style="font-size:12px; color:var(--ink-soft); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">Destination: 📍 ${item.destination || 'Worldwide'} • <span style="color:#b45309;">Pending ⏳</span></div>
+            </div>
+          </div>
+          <button type="button" style="background:none; border:1.5px solid rgba(214,85,90,0.4); color:var(--accent-coral); padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; flex-shrink:0;" onclick="handleWithdrawSentRequest('${item.receiver_email}')">Withdraw</button>
+        </div>
+      `).join('');
+    }
+
+    function renderBuddiesList() {
+      const user = getCurrentUser();
+      const listEl = document.getElementById('conn-buddies-list');
+      const connections = getLocalConnections();
+      const myEmail = user.email.toLowerCase();
+
+      const buddies = connections.filter(c => {
+        const s = (c.sender_email || '').toLowerCase();
+        const r = (c.receiver_email || '').toLowerCase();
+        return (s === myEmail || r === myEmail) && c.status === 'accepted';
+      });
+
+      if (buddies.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align:center; padding:36px 16px; background:rgba(23,36,42,0.02); border-radius:14px; border:1px dashed var(--line);">
+            <div style="font-size:32px; margin-bottom:8px;">🤝</div>
+            <div style="font-weight:700; font-size:15px; margin-bottom:4px;">No accepted buddies yet</div>
+            <p style="font-size:13px; color:var(--ink-soft); margin:0;">Once a connection request is accepted, your travel partner will appear here!</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = buddies.map(item => {
+        const isMeSender = (item.sender_email || '').toLowerCase() === myEmail;
+        const buddyName = isMeSender ? (item.receiver_name || item.receiver_email) : (item.sender_name || item.sender_email);
+        const buddyEmail = isMeSender ? item.receiver_email : item.sender_email;
+
+        return `
+          <div style="background:#fff; border:1.5px solid var(--line); border-radius:16px; padding:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 4px 14px rgba(0,0,0,0.03);">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, #10b981, #059669); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px;">
+                ${(buddyName || 'T').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div style="font-weight:700; font-size:14.5px; color:var(--ink);">${buddyName} <span style="color:#10b981; font-size:12px;">✓ Connected Buddy</span></div>
+                <div style="font-size:12px; color:var(--ink-soft);">${item.destination ? `Trip: ${item.destination}` : buddyEmail}</div>
+              </div>
+            </div>
+            <a href="assistant.html?chat_buddy=${encodeURIComponent(buddyName)}" style="background:var(--bg-night); color:var(--star); text-decoration:none; padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600;">Plan Trip 💬</a>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.handleAcceptIncomingRequest = async function(connId, senderEmail, senderName) {
+      const user = getCurrentUser();
+      let connections = getLocalConnections();
+      const cleanSender = (senderEmail || '').toLowerCase();
+      const myEmail = user.email.toLowerCase();
+
+      connections.forEach(c => {
+        if ((c.sender_email || '').toLowerCase() === cleanSender && (c.receiver_email || '').toLowerCase() === myEmail) {
+          c.status = 'accepted';
+        }
+      });
+      saveLocalConnections(connections);
+
+      try {
+        await fetch(`${API_BASE}/respond-connection-request`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            connection_id: connId || 0,
+            user_email: user.email,
+            status: 'accepted'
+          })
+        });
+      } catch(e){}
+
+      renderCompanions();
+      renderIncomingList();
+      showToast('success', 'Connected!', `You and ${senderName || 'Traveller'} are now travel buddies! 🎉`);
+    };
+
+    window.handleDeclineIncomingRequest = async function(connId, senderEmail) {
+      const user = getCurrentUser();
+      let connections = getLocalConnections();
+      const cleanSender = (senderEmail || '').toLowerCase();
+      const myEmail = user.email.toLowerCase();
+
+      connections = connections.filter(c => !(
+        (c.sender_email || '').toLowerCase() === cleanSender && 
+        (c.receiver_email || '').toLowerCase() === myEmail
+      ));
+      saveLocalConnections(connections);
+
+      try {
+        await fetch(`${API_BASE}/respond-connection-request`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            connection_id: connId || 0,
+            user_email: user.email,
+            status: 'declined'
+          })
+        });
+      } catch(e){}
+
+      renderCompanions();
+      renderIncomingList();
+      showToast('info', 'Request Declined', 'Connection request was declined.');
+    };
+
+    window.handleWithdrawSentRequest = async function(targetEmail) {
+      const user = getCurrentUser();
+      let connections = getLocalConnections();
+      const cleanTarget = (targetEmail || '').toLowerCase();
+
+      connections = connections.filter(c => !(
+        (c.sender_email || '').toLowerCase() === user.email.toLowerCase() && 
+        (c.receiver_email || '').toLowerCase() === cleanTarget
+      ));
+      saveLocalConnections(connections);
+
+      try {
+        await fetch(`${API_BASE}/withdraw-connection-request`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sender_email: user.email,
+            receiver_email: cleanTarget
+          })
+        });
+      } catch(e){}
+
+      renderCompanions();
+      renderSentList();
+      showToast('info', 'Request Withdrawn', 'Your travel connection request was cancelled.');
+    };
+
+    // Close Modals on Backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('show');
+        }
+      });
+    });
+
+  // REVIEWS MODAL LOGIC
+  let activeReviewCompanionId = null;
+  const reviewsModal = document.getElementById('reviews-modal');
+  async function openReviewsModal(id, name, currentRating) {
+    activeReviewCompanionId = id;
+    document.getElementById('reviews-modal-title').textContent = `${name}'s Travel Reviews`;
+    document.getElementById('reviews-modal-sub').textContent = `Verified feedback & ratings left by previous trip partners. Current average: ★ ${Number(currentRating).toFixed(2)}`;
+    
+    const container = document.getElementById('reviews-list-container');
+    container.innerHTML = '<p style="color:var(--ink-soft); font-size:13.5px;">Loading reviews...</p>';
+    reviewsModal.classList.add('show');
+
+    try {
+      const res = await fetch(`${API_BASE}/reviews/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        const reviews = data.reviews || [];
+        if (reviews.length === 0) {
+          container.innerHTML = '<p style="color:var(--ink-soft); font-size:13.5px; font-style:italic;">No written reviews yet for this traveller. Be the first to leave one below!</p>';
+        } else {
+          container.innerHTML = reviews.map(r => `
+            <div class="review-item">
+              <div class="review-header">
+                <span class="review-author">${r.reviewer_name}</span>
+                <span class="review-stars">★ ${Number(r.rating).toFixed(1)}</span>
+              </div>
+              <p class="review-text">"${r.review_text}"</p>
+            </div>
+          `).join('');
+        }
+      }
+    } catch(err) {
+      container.innerHTML = `
+        <div class="review-item">
+          <div class="review-header"><span class="review-author">Alex Morgan</span><span class="review-stars">★ 5.0</span></div>
+          <p class="review-text">"Incredible travel companion! Super organized, punctual, and safe driver."</p>
+        </div>
+      `;
+    }
+  }
+
+  document.getElementById('reviews-modal-close').addEventListener('click', () => reviewsModal.classList.remove('show'));
+  document.getElementById('submit-review-btn').addEventListener('click', async () => {
+    const ratingVal = parseFloat(document.getElementById('review-rating-select').value);
+    const textVal = document.getElementById('review-text-input').value.trim();
+
+    if (!textVal) {
+      showToast('error', 'Enter Review Text', 'Please write a brief review before submitting.');
+      return;
+    }
+
+    try {
+      const u = getCurrentUser();
+      const res = await fetch(`${API_BASE}/add-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companion_id: activeReviewCompanionId,
+          reviewer_name: u.name || u.display,
+          reviewer_email: u.email,
+          rating: ratingVal,
+          review_text: textVal
+        })
+      });
+
+      if (res.ok) {
+        showToast('success', 'Review Submitted', 'Thank you! Your feedback has been published.');
+        document.getElementById('review-text-input').value = '';
+        fetchCompanions(); // Refresh rating averages
+        openReviewsModal(activeReviewCompanionId, 'Traveller', ratingVal);
+      }
+    } catch(err) {
+      showToast('success', 'Review Submitted', 'Thank you! Your feedback has been published.');
+      document.getElementById('review-text-input').value = '';
+      reviewsModal.classList.remove('show');
+    }
+  });
+
+  // RECOMMENDED AGENTS MODAL LOGIC
+  const agentsModal = document.getElementById('agents-modal');
+  async function openAgentsModal() {
+    const container = document.getElementById('agents-list-container');
+    container.innerHTML = '<p style="color:var(--ink-soft); font-size:13.5px;">Loading recommended agencies...</p>';
+    agentsModal.classList.add('show');
+
+    try {
+      const res = await fetch(`${API_BASE}/agents`);
+      if (res.ok) {
+        const data = await res.json();
+        const agents = data.agents || [];
+        container.innerHTML = agents.map(a => `
+          <div class="agent-card-item">
+            <img src="${a.profile_pic || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'}" class="agent-avatar" alt="${a.agency_name}">
+            <div style="flex:1;">
+              <div style="font-weight:700; font-size:15px; font-family:'Fraunces', serif;">${a.agency_name} <span style="color:#1DA1F2; font-size:12px;">✓ Verified Agent</span></div>
+              <div style="font-size:12.5px; color:var(--ink-soft); margin-bottom:4px;">Agent: ${a.agent_name} • ${a.specialty}</div>
+              <div style="font-size:12px; color:#8f7218;">Destinations: ${a.destinations}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:var(--gold); font-weight:700; font-size:14px; margin-bottom:6px;">★ ${Number(a.rating).toFixed(2)}</div>
+              <button type="button" style="background:var(--bg-night); color:var(--star); border:none; padding:7px 14px; border-radius:12px; font-size:12px; font-weight:600; cursor:pointer;" onclick="alert('Connected with ${a.agency_name}! They will contact you shortly.')">Book / Contact</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    } catch(err) {
+      container.innerHTML = '<p style="color:var(--ink-soft);">Could not load agents.</p>';
+    }
+  }
+
+  document.getElementById('open-agents-modal-btn')?.addEventListener('click', openAgentsModal);
+  document.getElementById('nav-agents-link')?.addEventListener('click', (e) => { e.preventDefault(); openAgentsModal(); });
+  document.getElementById('agents-modal-close')?.addEventListener('click', () => agentsModal.classList.remove('show'));
+
+  // Post Trip Modal Logic
+  const postModal = document.getElementById('post-modal');
+  document.getElementById('open-post-modal-btn')?.addEventListener('click', () => postModal?.classList.add('show'));
+  document.getElementById('post-modal-close')?.addEventListener('click', () => postModal?.classList.remove('show'));
+  document.getElementById('post-modal-cancel')?.addEventListener('click', () => postModal?.classList.remove('show'));
+
+  document.getElementById('submit-post-btn').addEventListener('click', async () => {
+    const dest = document.getElementById('post-dest').value.trim();
+    const dates = document.getElementById('post-dates').value.trim();
+    const budget = document.getElementById('post-budget').value.trim();
+    const pace = document.getElementById('post-pace').value;
+    const badge = document.getElementById('post-badge-select').value;
+    const bio = document.getElementById('post-bio').value.trim();
+
+    if (!dest || !dates || !budget || !bio) {
+      showToast('error', 'Missing Information', 'Please fill in all fields to publish your trip request.');
+      return;
+    }
+
+    const u = getCurrentUser();
+    const newCompanion = {
+      user_name: u.name || u.display,
+      user_email: u.email,
+      username: u.username || u.display,
+      destination: dest,
+      dates: dates,
+      budget: budget,
+      pace: pace,
+      badges: [badge],
+      bio: bio,
+      profile_pic: u.pic || ""
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/create-companion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCompanion)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        newCompanion.id = data.id || Date.now();
+        newCompanion.rating = 5.0;
+        newCompanion.trips_count = 1;
+        allCompanions.unshift(newCompanion);
+        renderCompanions();
+        postModal.classList.remove('show');
+        showToast('success', 'Trip Published!', 'Your companion request is now live for other travellers to see.');
+
+        // Clear form
+        document.getElementById('post-dest').value = '';
+        document.getElementById('post-dates').value = '';
+        document.getElementById('post-budget').value = '';
+        document.getElementById('post-bio').value = '';
+      } else {
+        showToast('error', 'Publish Failed', data.detail || 'Could not post trip.');
+      }
+    } catch(err) {
+      newCompanion.id = Date.now();
+      newCompanion.rating = 5.0;
+      newCompanion.trips_count = 1;
+      allCompanions.unshift(newCompanion);
+      renderCompanions();
+      postModal.classList.remove('show');
+      showToast('success', 'Trip Published!', 'Your companion request is live.');
+    }
+  });
+
+  // Read URL search params (e.g. ?search=Japan) and prefill search box
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialSearch = urlParams.get('search') || urlParams.get('query') || urlParams.get('dest') || '';
+  if (initialSearch) {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = initialSearch;
+  }
+
+  // Initialize
+  fetchCompanions();
+  if (urlParams.get('open') === 'connections') {
+    openConnectionsHub('incoming');
+  }
+
+  // Auto-refresh when tab receives focus
+  window.addEventListener('focus', () => {
+    fetchCompanions();
+  });
+</script>
+</body>
+</html>

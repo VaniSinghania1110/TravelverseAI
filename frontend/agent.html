@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TravelVerse — Travel Agents & Group Trips</title>
+<script>
+  (function(){
+    var activeEmail = (localStorage.getItem('travelverse_current_user_email') || '').trim().toLowerCase();
+    var isAuth = localStorage.getItem('travelverse_session_active') === 'true';
+    if (!isAuth || !activeEmail || activeEmail === 'null' || activeEmail === 'undefined') {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-night: #0B2027;
+    --bg-night-2: #123A42;
+    --card-cream: #FFFDF8;
+    --ink: #17242A;
+    --ink-soft: #55625F;
+    --accent-sunset: #E8874A;
+    --accent-coral: #D6555A;
+    --gold: #C9A227;
+    --star: #FDEBD3;
+    --line: rgba(23,36,42,0.12);
+    --page-bg: #F4EEE2;
+    --green-badge: #2E7D32;
+    --blue-badge: #1976D2;
+    --purple-badge: #7B1FA2;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:'Work Sans', sans-serif;
+    color: var(--ink);
+    background: var(--page-bg);
+    min-height:100vh;
+  }
+
+  /* NAV */
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 5vw;
+    background: var(--bg-night);
+    color: var(--star);
+  }
+  .logo{
+    font-family:'Fraunces', serif; font-weight:700; font-size:20px;
+    display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--star);
+  }
+  .logo-dot{ width:8px; height:8px; border-radius:50%; background: var(--gold); }
+  .nav-links{ display:flex; gap:30px; font-size:14px; font-weight:500; }
+  .nav-links a{ color: rgba(253,235,211,0.75); text-decoration:none; transition: color .2s ease; }
+  .nav-links a.active{ color: var(--star); border-bottom:2px solid var(--gold); padding-bottom:4px; font-weight:600; }
+  .nav-links a:hover{ color: var(--star); }
+  .nav-right{ display:flex; align-items:center; gap:16px; }
+  .user-chip{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; }
+  .user-avatar{
+    position:relative;
+    width:36px; height:36px; border-radius:50%;
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-weight:700; font-size:14px; color:#fff;
+    cursor:pointer; overflow:hidden; border:none; padding:0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .user-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .account-menu-wrap{ position:relative; }
+  .account-menu-trigger{
+    display:flex; align-items:center; gap:6px;
+    background:none; border:none; color: var(--star);
+    font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+    padding:6px 4px;
+  }
+  .account-menu-trigger .chevron{ transition: transform .18s ease; opacity:.7; }
+  .account-menu{
+    position:absolute; top: calc(100% + 8px); right:0;
+    background: var(--card-cream); border-radius: 12px;
+    box-shadow: 0 16px 34px rgba(0,0,0,0.22);
+    min-width: 160px; padding: 6px;
+    opacity:0; visibility:hidden; transform: translateY(-6px);
+    transition: all .16s ease;
+    z-index: 50;
+  }
+  .account-menu.show{ opacity:1; visibility:visible; transform: translateY(0); }
+  .account-menu-item{
+    display:block; width:100%; text-align:left;
+    background:none; border:none; border-radius:8px;
+    padding:9px 12px; font-family:inherit; font-size:13.5px; font-weight:600;
+    color: var(--ink); cursor:pointer; transition: background .15s ease;
+  }
+  .account-menu-item:hover{ background: rgba(23,36,42,0.06); }
+  .account-menu-item.danger{ color: var(--accent-coral); }
+
+  /* HERO */
+  .hero-banner{
+    background: linear-gradient(120deg, var(--bg-night) 0%, var(--bg-night-2) 55%, #2a2033 100%);
+    color: var(--star);
+    padding: 44px 5vw 48px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px;
+  }
+  .hero-text{ max-width:680px; }
+  .hero-banner .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:.15em;
+    text-transform:uppercase; color: var(--gold); margin-bottom:10px;
+  }
+  .hero-banner h1{
+    font-family:'Fraunces', serif; font-weight:600; font-size: clamp(28px, 3.5vw, 42px);
+    line-height:1.15; margin:0 0 12px; color:#fff;
+  }
+  .hero-banner p{
+    font-size:15px; line-height:1.6; color: rgba(253,235,211,0.85); margin:0 0 18px;
+  }
+  .hero-actions{ display:flex; gap:12px; flex-wrap:wrap; }
+  .btn{
+    padding:11px 22px; border-radius:12px; font-size:14px; font-weight:600;
+    cursor:pointer; transition: all .2s ease; border:none; display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+  }
+  .btn-primary{
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; box-shadow:0 4px 14px rgba(232,135,74,0.35);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 6px 18px rgba(232,135,74,0.45); }
+  .btn-outline{
+    background: rgba(253,235,211,0.12); color: var(--star); border: 1px solid rgba(253,235,211,0.3);
+  }
+  .btn-outline:hover{ background: rgba(253,235,211,0.22); border-color: var(--gold); }
+
+  /* MAIN WRAPPER */
+  main{ max-width: 1200px; margin: -24px auto 60px; padding: 0 4vw; position:relative; z-index:10; }
+
+  /* NAVIGATION TABS */
+  .section-tabs{
+    display:flex; gap:10px; background: var(--card-cream); padding:8px; border-radius:16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid var(--line);
+    margin-bottom: 24px; overflow-x:auto;
+  }
+  .tab-btn{
+    padding:10px 20px; border-radius:12px; border:none; background:none;
+    font-size:14px; font-weight:600; color: var(--ink-soft); cursor:pointer;
+    display:flex; align-items:center; gap:8px; transition: all .2s; white-space:nowrap;
+  }
+  .tab-btn.active{
+    background: var(--bg-night); color: var(--star);
+    box-shadow: 0 4px 12px rgba(11,32,39,0.2);
+  }
+  .tab-badge{
+    background: rgba(255,255,255,0.2); color:#fff; font-size:11px; padding:2px 7px; border-radius:10px;
+  }
+  .tab-btn:not(.active) .tab-badge{ background: rgba(23,36,42,0.1); color: var(--ink); }
+
+  /* CONTROLS & SEARCH */
+  .control-card{
+    background: var(--card-cream); border-radius: 16px; padding: 20px;
+    border: 1px solid var(--line); box-shadow: 0 10px 25px rgba(0,0,0,0.04);
+    margin-bottom: 28px; display:flex; flex-direction:column; gap:16px;
+  }
+  .search-row{ display:flex; gap:12px; flex-wrap:wrap; }
+  .search-box{
+    flex:1; min-width:240px; position:relative;
+  }
+  .search-box input{
+    width:100%; padding: 12px 14px 12px 40px; border-radius: 12px;
+    border: 1px solid var(--line); background:#fff; font-size:14px; font-family:inherit;
+    outline:none; transition: border .2s ease;
+  }
+  .search-box input:focus{ border-color: var(--accent-sunset); box-shadow: 0 0 0 3px rgba(232,135,74,0.15); }
+  .search-box .icon{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color: var(--ink-soft); }
+
+  .filter-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .filter-pill{
+    background:#fff; border: 1px solid var(--line); border-radius:20px;
+    padding: 6px 14px; font-size:12.5px; font-weight:600; color: var(--ink-soft);
+    cursor:pointer; transition: all .18s; display:inline-flex; align-items:center; gap:6px;
+  }
+  .filter-pill:hover{ border-color: var(--accent-sunset); color: var(--ink); }
+  .filter-pill.active{ background: var(--bg-night-2); color: #fff; border-color: var(--bg-night-2); }
+
+  /* CARDS GRID */
+  .grid{
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+  }
+
+  /* AGENT CARD */
+  .agent-card{
+    background: var(--card-cream); border-radius: 18px; border: 1px solid var(--line);
+    overflow:hidden; box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+    display:flex; flex-direction:column; transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .agent-card:hover{
+    transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0,0,0,0.08);
+  }
+  .agent-header{
+    padding: 20px; display:flex; gap:16px; align-items:flex-start;
+    border-bottom: 1px solid rgba(23,36,42,0.06); background: #FAF5EB;
+  }
+  .agent-avatar-lg{
+    width: 64px; height: 64px; border-radius: 16px; object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); flex-shrink:0; border: 2px solid #fff;
+  }
+  .agent-meta{ flex:1; min-width:0; }
+  .agent-name-row{ display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:4px; }
+  .agent-name{
+    font-family:'Fraunces', serif; font-size:17px; font-weight:700; color: var(--ink);
+    margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .agent-type-badge{
+    font-size:11px; font-weight:700; padding:3px 8px; border-radius:8px;
+    letter-spacing:0.02em; display:inline-flex; align-items:center; gap:4px; flex-shrink:0;
+  }
+  .badge-person{ background: rgba(25,118,210,0.12); color: var(--blue-badge); }
+  .badge-group{ background: rgba(123,31,162,0.12); color: var(--purple-badge); }
+  
+  .agency-title{ font-size:13px; color: var(--ink-soft); margin-bottom:6px; font-weight:500; }
+  .agent-rating-row{ display:flex; align-items:center; gap:8px; font-size:12.5px; }
+  .rating-score{ color: #D48806; font-weight:700; display:flex; align-items:center; gap:3px; }
+  .review-count{ color: var(--ink-soft); font-size:11.5px; }
+
+  .agent-body{ padding: 18px 20px; flex:1; display:flex; flex-direction:column; gap:14px; }
+  .agent-bio{ font-size:13.5px; line-height:1.55; color: var(--ink-soft); margin:0; }
+  
+  .agent-details-tags{ display:flex; flex-wrap:wrap; gap:6px; }
+  .detail-tag{
+    background:#fff; border: 1px solid rgba(23,36,42,0.08); border-radius:8px;
+    padding:4px 9px; font-size:11.5px; color: var(--ink); font-weight:500;
+  }
+  .detail-tag.highlight{ background: rgba(201,162,39,0.12); border-color: rgba(201,162,39,0.3); color: #8C6A08; }
+
+  .agent-card-footer{
+    padding: 14px 20px; background:#FAF5EB; border-top: 1px solid rgba(23,36,42,0.06);
+    display:flex; gap:10px;
+  }
+  .agent-card-footer .btn{ flex:1; justify-content:center; padding:9px 14px; font-size:13px; }
+
+  /* GROUP TRIP CARD */
+  .trip-card{
+    background: var(--card-cream); border-radius: 18px; border: 1px solid var(--line);
+    overflow:hidden; box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+    display:flex; flex-direction:column; transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .trip-card:hover{
+    transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0,0,0,0.08);
+  }
+  .trip-thumb-wrap{ position:relative; width:100%; height:190px; overflow:hidden; }
+  .trip-thumb{ width:100%; height:100%; object-fit:cover; transition: transform .4s ease; }
+  .trip-card:hover .trip-thumb{ transform: scale(1.04); }
+  .trip-category-pill{
+    position:absolute; top:12px; left:12px;
+    background: rgba(11,32,39,0.85); backdrop-filter: blur(4px);
+    color: var(--star); padding:4px 10px; border-radius:8px; font-size:11.5px; font-weight:600;
+  }
+  .trip-price-pill{
+    position:absolute; bottom:12px; right:12px;
+    background: linear-gradient(135deg, var(--accent-sunset), var(--accent-coral));
+    color:#fff; padding:6px 12px; border-radius:10px; font-weight:700; font-size:14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  .trip-body{ padding: 18px 20px; flex:1; display:flex; flex-direction:column; gap:12px; }
+  .trip-host-bar{ display:flex; align-items:center; gap:10px; }
+  .trip-host-avatar{ width:28px; height:28px; border-radius:50%; object-fit:cover; }
+  .trip-host-name{ font-size:12.5px; font-weight:600; color: var(--ink-soft); }
+  .trip-title{
+    font-family:'Fraunces', serif; font-size:18px; font-weight:700; color: var(--ink);
+    margin:0; line-height:1.3;
+  }
+  .trip-info-row{
+    display:grid; grid-template-columns: 1fr 1fr; gap:10px;
+    background:#FAF5EB; padding:10px 12px; border-radius:10px; font-size:12px;
+  }
+  .trip-info-item{ display:flex; flex-direction:column; gap:2px; }
+  .trip-info-label{ color: var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:0.04em; }
+  .trip-info-val{ font-weight:600; color: var(--ink); }
+
+  .trip-spots-bar{ margin-top:4px; }
+  .spots-text{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; font-weight:600; }
+  .spots-progress{ width:100%; height:6px; background: rgba(23,36,42,0.1); border-radius:4px; overflow:hidden; }
+  .spots-fill{ height:100%; background: linear-gradient(90deg, #2E7D32, var(--gold)); border-radius:4px; transition: width .3s; }
+
+  .trip-card-footer{
+    padding: 14px 20px; background:#FAF5EB; border-top: 1px solid rgba(23,36,42,0.06);
+    display:flex; gap:10px;
+  }
+  .trip-card-footer .btn{ flex:1; justify-content:center; padding:9px 12px; font-size:13px; }
+
+  /* ENROLLED TRIPS TAB */
+  .enrollment-card{
+    background: var(--card-cream); border-radius: 16px; border: 1px solid var(--line);
+    padding: 20px; display:flex; gap:20px; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; box-shadow: 0 6px 18px rgba(0,0,0,0.04); margin-bottom:16px;
+  }
+  .enrollment-thumb{ width:100px; height:80px; border-radius:12px; object-fit:cover; }
+  .enrollment-meta{ flex:1; min-width:240px; }
+
+  /* MODALS */
+  .modal-overlay{
+    position:fixed; inset:0; background: rgba(11,32,39,0.7); backdrop-filter: blur(4px);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    z-index: 1000; opacity:0; visibility:hidden; transition: all .2s ease;
+  }
+  .modal-overlay.show{ opacity:1; visibility:visible; }
+  .modal-card{
+    background: var(--card-cream); border-radius: 20px; max-width: 580px; width:100%;
+    max-height: 90vh; overflow-y:auto; padding: 28px; position:relative;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.3); border: 1px solid var(--line);
+  }
+  .modal-close{
+    position:absolute; top:20px; right:20px; width:34px; height:34px; border-radius:50%;
+    border:none; background: rgba(23,36,42,0.08); font-size:16px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close:hover{ background: rgba(23,36,42,0.16); }
+  .modal-title{ font-family:'Fraunces', serif; font-size:22px; font-weight:700; margin:0 0 8px; }
+  .modal-sub{ font-size:13.5px; color: var(--ink-soft); margin:0 0 20px; line-height:1.5; }
+
+  .form-group{ margin-bottom: 16px; }
+  .form-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; color: var(--ink); }
+  .form-control{
+    width:100%; padding:10px 14px; border-radius:10px; border: 1px solid var(--line);
+    font-size:14px; font-family:inherit; background:#fff; outline:none; transition:border .2s;
+  }
+  .form-control:focus{ border-color: var(--accent-sunset); box-shadow: 0 0 0 3px rgba(232,135,74,0.12); }
+  textarea.form-control{ resize:vertical; min-height:85px; }
+
+  .radio-pill-group{ display:flex; gap:10px; margin-top:6px; }
+  .radio-pill-label{
+    flex:1; border: 1px solid var(--line); background:#fff; border-radius:10px;
+    padding:10px; text-align:center; font-size:13px; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s;
+  }
+  .radio-pill-label input{ display:none; }
+  .radio-pill-label.active{
+    background: var(--bg-night-2); color:#fff; border-color: var(--bg-night-2);
+  }
+
+  /* TOAST */
+  #travel-toast{
+    position:fixed; bottom:24px; right:24px; z-index:9999;
+    background: var(--bg-night); color: var(--star); padding:14px 20px;
+    border-radius:14px; display:flex; align-items:center; gap:12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25); border: 1px solid var(--gold);
+    transform: translateY(100px); opacity:0; transition: all .25s ease;
+  }
+  #travel-toast.show{ transform: translateY(0); opacity:1; }
+  #travel-toast.success{ border-color: #4CAF50; }
+  #travel-toast.error{ border-color: var(--accent-coral); }
+
+  @media(max-width:768px){
+    .nav-links{ display:none; }
+    .grid{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav>
+  <a href="dashboard.html" class="logo"><span class="logo-dot"></span> TravelVerse</a>
+  <div class="nav-links">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="companions.html">Find companions</a>
+    <a href="connections.html">Connections</a>
+    <a href="chat.html">Chat</a>
+    <a href="agent.html" class="active">Agents</a>
+    <a href="assistant.html">Assistant</a>
+  </div>
+  <div class="nav-right">
+    <div class="user-chip">
+      <button type="button" class="user-avatar" id="user-avatar">
+        <span id="avatar-initial">T</span>
+      </button>
+      <div class="account-menu-wrap">
+        <button type="button" class="account-menu-trigger" id="account-menu-trigger">
+          <span id="user-name-chip">Traveller</span>
+          <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="account-menu" id="account-menu">
+          <button type="button" onclick="window.location.href='dashboard.html'" class="account-menu-item">My Dashboard</button>
+          <button type="button" id="logout-btn" class="account-menu-item danger">Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero-banner">
+  <div class="hero-text">
+    <div class="eyebrow">VERIFIED GUIDES & TRAVEL AGENCIES</div>
+    <h1>Connect With Expert Travel Agents & Join Group Trips</h1>
+    <p>Discover licensed individual tour guides and established travel agencies. Connect directly for customized itineraries or enroll in curated small-group expeditions across the globe.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary" onclick="openRegisterAgentModal()">+ Register as an Agent</button>
+      <button class="btn btn-outline" onclick="openCreateTripModal()">🚀 Host a Group Trip</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main>
+  <!-- SECTION TABS -->
+  <div class="section-tabs">
+    <button class="tab-btn active" id="tab-agents" onclick="switchTab('agents')">
+      👥 Registered Agents <span class="tab-badge" id="count-agents">0</span>
+    </button>
+    <button class="tab-btn" id="tab-trips" onclick="switchTab('trips')">
+      🎒 Explore Group Trips <span class="tab-badge" id="count-trips">0</span>
+    </button>
+    <button class="tab-btn" id="tab-my-trips" onclick="switchTab('my-trips')">
+      🎟️ My Enrolled Trips <span class="tab-badge" id="count-enrolled">0</span>
+    </button>
+  </div>
+
+  <!-- CONTROLS & FILTERS -->
+  <div class="control-card">
+    <div class="search-row">
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" id="filter-search" placeholder="Search by name, destination (e.g. Spiti, Bali, Iceland), or specialty..." oninput="handleFilterChange()">
+      </div>
+    </div>
+    
+    <div class="filter-row" id="agent-type-filters">
+      <span style="font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase;">Agent Type:</span>
+      <button class="filter-pill active" data-type="all" onclick="setAgentTypeFilter('all')">All Agents</button>
+      <button class="filter-pill" data-type="person" onclick="setAgentTypeFilter('person')">👤 Individual Guides (Persons)</button>
+      <button class="filter-pill" data-type="group" onclick="setAgentTypeFilter('group')">🏢 Travel Agencies (Groups)</button>
+    </div>
+  </div>
+
+  <!-- VIEWS CONTAINER -->
+  <div id="view-agents" class="grid">
+    <!-- Populated by JS -->
+  </div>
+
+  <div id="view-trips" class="grid" style="display:none;">
+    <!-- Populated by JS -->
+  </div>
+
+  <div id="view-my-trips" style="display:none;">
+    <!-- Populated by JS -->
+  </div>
+</main>
+
+<!-- MODAL: CONTACT AGENT -->
+<div class="modal-overlay" id="contact-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal('contact-modal')">✕</button>
+    <div class="modal-title">Contact Agent</div>
+    <div class="modal-sub" id="contact-agent-subtitle">Send a message or custom trip inquiry.</div>
+
+    <form id="contact-form" onsubmit="submitContactForm(event)">
+      <input type="hidden" id="contact-agent-id">
+      <input type="hidden" id="contact-agent-email">
+      <input type="hidden" id="contact-agent-name">
+
+      <div class="form-group">
+        <label class="form-label">Inquiry Reason</label>
+        <select class="form-control" id="contact-reason">
+          <option value="custom_trip">Request Custom Trip Itinerary</option>
+          <option value="group_trip">Question About a Group Trip</option>
+          <option value="pricing">Rates & Package Availability</option>
+          <option value="general">General Travel Inquiry</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Destination of Interest</label>
+        <input type="text" class="form-control" id="contact-dest" placeholder="e.g. Spiti Valley, Ladakh, Iceland" required>
+      </div>
+
+      <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label class="form-label">Expected Dates</label>
+          <input type="text" class="form-control" id="contact-dates" placeholder="e.g. Next month / Dec 2026">
+        </div>
+        <div>
+          <label class="form-label">Group Size</label>
+          <input type="text" class="form-control" id="contact-group-size" placeholder="e.g. Solo / 2 people / Family">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your Message or Requirements</label>
+        <textarea class="form-control" id="contact-msg" placeholder="Tell the agent about your travel preferences, budget, or questions..." required></textarea>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:20px;">
+        <button type="button" class="btn btn-outline" style="flex:1;" onclick="openDirectChatFromModal()">💬 Open Direct Chat</button>
+        <button type="submit" class="btn btn-primary" style="flex:1;">Send Inquiry</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: ENROLL IN GROUP TRIP -->
+<div class="modal-overlay" id="enroll-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal('enroll-modal')">✕</button>
+    <div class="modal-title">Enroll in Group Trip</div>
+    <div class="modal-sub" id="enroll-trip-subtitle">Reserve your spot on this departure.</div>
+
+    <form id="enroll-form" onsubmit="submitEnrollForm(event)">
+      <input type="hidden" id="enroll-trip-id">
+
+      <div class="form-group" style="background:#FAF5EB; padding:14px; border-radius:12px; border:1px solid var(--line);">
+        <div style="font-weight:700; font-size:15px; margin-bottom:4px;" id="enroll-trip-title"></div>
+        <div style="font-size:13px; color:var(--ink-soft);" id="enroll-trip-details"></div>
+        <div style="font-size:14px; font-weight:700; color:var(--accent-sunset); margin-top:6px;" id="enroll-trip-price"></div>
+      </div>
+
+      <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label class="form-label">Number of Travellers</label>
+          <select class="form-control" id="enroll-seats" onchange="updateEnrollTotal()">
+            <option value="1">1 Person</option>
+            <option value="2">2 People</option>
+            <option value="3">3 People</option>
+            <option value="4">4 People</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Contact Phone / WhatsApp</label>
+          <input type="tel" class="form-control" id="enroll-phone" placeholder="+1 / +91 ..." required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Traveller Name(s)</label>
+        <input type="text" class="form-control" id="enroll-names" placeholder="Full names of all travellers" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Dietary Preferences / Special Requests</label>
+        <textarea class="form-control" id="enroll-notes" placeholder="e.g. Vegetarian, medical needs, twin-bed preference..."></textarea>
+      </div>
+
+      <div style="background:rgba(201,162,39,0.1); border:1px solid rgba(201,162,39,0.3); padding:12px 14px; border-radius:10px; font-size:13px; margin-bottom:18px;">
+        💡 <strong>Instant Confirmation:</strong> No payment required right now. The agent will confirm your spot and provide logistics & itinerary pack.
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">Confirm & Enroll Spot</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: REGISTER AS AGENT -->
+<div class="modal-overlay" id="register-agent-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal('register-agent-modal')">✕</button>
+    <div class="modal-title">Register as Travel Agent</div>
+    <div class="modal-sub">List yourself or your agency on TravelVerse to connect with travellers.</div>
+
+    <form id="register-agent-form" onsubmit="submitRegisterAgent(event)">
+      <div class="form-group">
+        <label class="form-label">Are you registering as a Person or a Travel Group?</label>
+        <div class="radio-pill-group">
+          <label class="radio-pill-label active" id="label-type-person">
+            <input type="radio" name="reg-agent-type" value="person" checked onchange="toggleAgentTypeForm('person')">
+            👤 Individual Guide (Person)
+          </label>
+          <label class="radio-pill-label" id="label-type-group">
+            <input type="radio" name="reg-agent-type" value="group" onchange="toggleAgentTypeForm('group')">
+            🏢 Travel Agency / Group
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" id="reg-name-label">Your Full Name</label>
+        <input type="text" class="form-control" id="reg-agent-name" placeholder="e.g. Aarav Sharma" required>
+      </div>
+
+      <div class="form-group" id="reg-agency-group" style="display:none;">
+        <label class="form-label">Agency / Company Name</label>
+        <input type="text" class="form-control" id="reg-agency-name" placeholder="e.g. Nomad Trails Expeditions">
+      </div>
+
+      <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label class="form-label">Official Email</label>
+          <input type="email" class="form-control" id="reg-email" placeholder="agent@travel.com" required>
+        </div>
+        <div>
+          <label class="form-label">Phone / WhatsApp</label>
+          <input type="tel" class="form-control" id="reg-phone" placeholder="+91 98765 43210" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Specialty / Travel Style</label>
+        <input type="text" class="form-control" id="reg-specialty" placeholder="e.g. High Altitude Treks, Luxury Honeymoons, Wildlife Safaris" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Key Destinations Covered</label>
+        <input type="text" class="form-control" id="reg-destinations" placeholder="e.g. Spiti, Ladakh, Iceland, Bali, Peru" required>
+      </div>
+
+      <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label class="form-label">Years of Experience</label>
+          <input type="number" class="form-control" id="reg-experience" value="5" min="1" max="40">
+        </div>
+        <div>
+          <label class="form-label">Languages Spoken</label>
+          <input type="text" class="form-control" id="reg-languages" placeholder="e.g. English, Hindi, Spanish">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Bio & Overview</label>
+        <textarea class="form-control" id="reg-bio" placeholder="Describe your background, safety certifications, or what makes your tours unique..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Profile / Logo Image URL (Optional)</label>
+        <input type="url" class="form-control" id="reg-pic" placeholder="https://images.unsplash.com/...">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">Register Agent Profile</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: HOST A GROUP TRIP -->
+<div class="modal-overlay" id="create-trip-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal('create-trip-modal')">✕</button>
+    <div class="modal-title">Host a New Group Trip</div>
+    <div class="modal-sub">Publish a curated group departure for travellers to enroll.</div>
+
+    <form id="create-trip-form" onsubmit="submitCreateTrip(event)">
+      <div class="form-group">
+        <label class="form-label">Trip Title</label>
+        <input type="text" class="form-control" id="trip-title" placeholder="e.g. 7-Day Spiti Valley 4x4 Expedition" required>
+      </div>
+
+      <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label class="form-label">Destination</label>
+          <input type="text" class="form-control" id="trip-dest" placeholder="e.g. Spiti Valley, India" required>
+        </div>
+        <div>
+          <label class="form-label">Category</label>
+          <select class="form-control" id="trip-category">
+            <option value="Adventure">Adventure & Road Trip</option>
+            <option value="Cultural">Culture & Heritage</option>
+            <option value="Glacier & Aurora">Glacier & Arctic</option>
+            <option value="Island & Luxury">Island & Luxury</option>
+            <option value="Wildlife Safari">Wildlife Safari</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label class="form-label">Departure Date</label>
+          <input type="date" class="form-control" id="trip-start" required>
+        </div>
+        <div>
+          <label class="form-label">Duration (Days)</label>
+          <input type="number" class="form-control" id="trip-duration" value="7" min="1" max="60" required>
+        </div>
+      </div>
+
+      <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label class="form-label">Price per person ($)</label>
+          <input type="number" class="form-control" id="trip-price" placeholder="e.g. 690" required>
+        </div>
+        <div>
+          <label class="form-label">Max Group Capacity</label>
+          <input type="number" class="form-control" id="trip-capacity" value="12" min="2" max="50" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Host Name / Agency</label>
+        <input type="text" class="form-control" id="trip-host" placeholder="Your name or agency name" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Cover Image URL</label>
+        <input type="url" class="form-control" id="trip-image" placeholder="https://images.unsplash.com/..." required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Trip Description & Highlights</label>
+        <textarea class="form-control" id="trip-desc" placeholder="Overview of the journey, key spots visited, what is included..." required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">Publish Group Trip</button>
+    </form>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="travel-toast">
+  <span id="toast-icon">✓</span>
+  <div>
+    <div id="toast-title" style="font-weight:700; font-size:13.5px;">Notification</div>
+    <div id="toast-message" style="font-size:12px; opacity:0.85;">Details</div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = "http://127.0.0.1:8000";
+
+  // Current User Session
+  const currentUser = {
+    email: (localStorage.getItem('travelverse_current_user_email') || '').trim().toLowerCase(),
+    name: localStorage.getItem('travelverse_user_name') || localStorage.getItem('travelverse_username') || 'Traveller',
+    username: (localStorage.getItem('travelverse_username') || 'traveller').trim().toLowerCase(),
+    pic: localStorage.getItem('travelverse_profile_pic') || ''
+  };
+
+  // Populate User Avatar
+  document.getElementById('user-name-chip').textContent = currentUser.name;
+  if (currentUser.pic && currentUser.pic.length > 10) {
+    document.getElementById('user-avatar').innerHTML = `<img src="${currentUser.pic}" alt="avatar">`;
+  } else {
+    document.getElementById('avatar-initial').textContent = currentUser.name.charAt(0).toUpperCase();
+  }
+
+  // Account dropdown toggle
+  const accountTrigger = document.getElementById('account-menu-trigger');
+  const accountMenu = document.getElementById('account-menu');
+  accountTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    accountMenu.classList.toggle('show');
+  });
+  document.addEventListener('click', () => accountMenu.classList.remove('show'));
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  });
+
+  // Toast Helper
+  function showToast(type, title, msg) {
+    const t = document.getElementById('travel-toast');
+    t.className = type + ' show';
+    document.getElementById('toast-icon').textContent = type === 'success' ? '✓' : '!';
+    document.getElementById('toast-title').textContent = title;
+    document.getElementById('toast-message').textContent = msg;
+    clearTimeout(window._toastT);
+    window._toastT = setTimeout(() => t.classList.remove('show'), 3800);
+  }
+
+  // DEFAULT HIGH-QUALITY SEED DATA (Always ready as fallback & state)
+  const defaultAgents = [
+    {
+      id: 1,
+      agent_type: "person",
+      agent_name: "Aarav Sharma",
+      agency_name: "Himalayan High Passes",
+      email: "aarav.sharma@travelverse.com",
+      phone: "+91 98765 43210",
+      rating: 4.98,
+      reviews_count: 64,
+      specialty: "High-Altitude Passes, Spiti & Ladakh 4x4",
+      destinations: "Spiti Valley, Ladakh, Manali, Zanskar, Nepal",
+      bio: "Certified mountaineer and wilderness first responder with 8+ years leading offbeat 4x4 road journeys and high-altitude treks across the Western Himalayas.",
+      experience_years: 8,
+      languages: "English, Hindi, Pahadi",
+      profile_pic: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      badges: ["Certified Mountaineer", "Wilderness First Aid", "Top Rated Guide"]
+    },
+    {
+      id: 2,
+      agent_type: "person",
+      agent_name: "Elena Rostova",
+      agency_name: "Arctic & Alpine Trailblazer",
+      email: "elena.rostova@travelverse.com",
+      phone: "+41 78 123 4567",
+      rating: 4.96,
+      reviews_count: 52,
+      specialty: "Aurora Chasing, Glacier Treks & Alpine Hikes",
+      destinations: "Iceland, Swiss Alps, Norway, Dolomites",
+      bio: "Glacier expedition leader and landscape photographer. I take small groups off the tourist track to witness northern lights and secret alpine viewpoints.",
+      experience_years: 9,
+      languages: "English, German, Russian",
+      profile_pic: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      badges: ["Glacier Guide", "Photo Expedition Leader"]
+    },
+    {
+      id: 3,
+      agent_type: "person",
+      agent_name: "Mateo Silva",
+      agency_name: "Andes & Inca Cultural Treks",
+      email: "mateo.silva@travelverse.com",
+      phone: "+51 984 567 890",
+      rating: 4.93,
+      reviews_count: 39,
+      specialty: "Inca Trail, Sacred Valley & Andean Gastronomy",
+      destinations: "Cusco, Machu Picchu, Rainbow Mountain, Peru",
+      bio: "Born and raised in Cusco, licensed Quechua-speaking heritage guide passionate about ancient Inca engineering, sustainable hiking, and authentic village home-stays.",
+      experience_years: 7,
+      languages: "English, Spanish, Quechua",
+      profile_pic: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      badges: ["Licensed Heritage Guide", "Local Native Host"]
+    },
+    {
+      id: 4,
+      agent_type: "group",
+      agent_name: "Vikram & Nomad Crew",
+      agency_name: "Nomad Trails Expeditions",
+      email: "contact@nomadtrails.org",
+      phone: "+91 91234 56780",
+      rating: 4.95,
+      reviews_count: 118,
+      specialty: "Overland Expeditions, Heritage Rallies & Silk Road",
+      destinations: "Rajasthan, Central Asia, Spiti, Georgia, Vietnam",
+      bio: "A premier collective of expedition leaders, mechanics, and local storytellers specializing in self-drive convoys, desert camp-outs, and deep cultural immersion.",
+      experience_years: 12,
+      languages: "English, Hindi, French",
+      profile_pic: "https://images.unsplash.com/photo-1539635278303-d4002c07eae3?auto=format&fit=crop&w=400&q=80",
+      badges: ["Govt. Registered Operator", "24/7 Road Support"]
+    },
+    {
+      id: 5,
+      agent_type: "group",
+      agent_name: "Sophia Laurent",
+      agency_name: "Odyssey Luxury Voyages",
+      email: "concierge@odysseyvoyages.com",
+      phone: "+33 1 42 68 55 00",
+      rating: 4.97,
+      reviews_count: 87,
+      specialty: "Bespoke Island Escapes, Yacht Charters & Wine Tours",
+      destinations: "Amalfi Coast, Santorini, Bali, French Riviera, Maldives",
+      bio: "Award-winning boutique luxury travel agency curating five-star private villa retreats, catamaran sails, wine-tasting journeys, and VIP concierge experiences.",
+      experience_years: 14,
+      languages: "English, French, Italian",
+      profile_pic: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      badges: ["Virtuoso Partner", "VIP Concierge"]
+    },
+    {
+      id: 6,
+      agent_type: "group",
+      agent_name: "Kipchoge Mwangi & Team",
+      agency_name: "Safari & Savannah Collective",
+      email: "info@savannahcollective.co.ke",
+      phone: "+254 700 123 456",
+      rating: 4.94,
+      reviews_count: 96,
+      specialty: "Big 5 Game Drives, Great Migration & Eco-Lodges",
+      destinations: "Masai Mara, Serengeti, Amboseli, Ngorongoro",
+      bio: "Native East African conservationists and professional safari guides offering ethical game drives, sunrise balloon safaris, and luxury tented wilderness camps.",
+      experience_years: 11,
+      languages: "English, Swahili",
+      profile_pic: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
+      badges: ["Eco-Tourism Gold", "Certified Wildlife Guide"]
+    }
+  ];
+
+  const defaultTrips = [
+    {
+      id: 101,
+      agent_id: 1,
+      agent_name: "Aarav Sharma",
+      agent_type: "person",
+      title: "Spiti Valley 4x4 High-Altitude Expedition",
+      destination: "Spiti Valley & Kaza, India",
+      category: "Adventure",
+      start_date: "2026-11-20",
+      duration_days: 8,
+      price: 690,
+      currency: "USD",
+      max_capacity: 10,
+      enrolled_count: 6,
+      cover_image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
+      description: "Traverse high mountain passes, suspension bridges, ancient monasteries, and camp under milky way skies at Chandratal lake."
+    },
+    {
+      id: 102,
+      agent_id: 2,
+      agent_name: "Elena Rostova",
+      agent_type: "person",
+      title: "Iceland Northern Lights & Crystal Ice Caves",
+      destination: "Reykjavik, Vik & Vatnajökull, Iceland",
+      category: "Glacier & Aurora",
+      start_date: "2026-12-05",
+      duration_days: 7,
+      price: 1450,
+      currency: "USD",
+      max_capacity: 8,
+      enrolled_count: 5,
+      cover_image: "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=800&q=80",
+      description: "Explore natural blue ice caves, black sand beaches, geothermal hot pools, and hunt the Aurora Borealis every clear night."
+    },
+    {
+      id: 103,
+      agent_id: 3,
+      agent_name: "Mateo Silva",
+      agent_type: "person",
+      title: "Machu Picchu & Sacred Valley Cultural Trek",
+      destination: "Cusco & Machu Picchu, Peru",
+      category: "Cultural",
+      start_date: "2027-01-12",
+      duration_days: 6,
+      price: 920,
+      currency: "USD",
+      max_capacity: 12,
+      enrolled_count: 7,
+      cover_image: "https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=800&q=80",
+      description: "Hike the Inca Trail with a native Quechua historian, experience authentic Andean feasts, and watch sunrise hit the Sun Gate."
+    },
+    {
+      id: 104,
+      agent_id: 5,
+      agent_name: "Odyssey Luxury Voyages",
+      agent_type: "group",
+      title: "Bali & Nusa Penida Wellness & Island Sail",
+      destination: "Ubud & Nusa Penida, Bali",
+      category: "Island & Luxury",
+      start_date: "2026-11-25",
+      duration_days: 7,
+      price: 1280,
+      currency: "USD",
+      max_capacity: 14,
+      enrolled_count: 9,
+      cover_image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80",
+      description: "Private catamaran charter to Manta Bay, jungle infinity villa stays, sound healing therapy, and beachside sunset dinners."
+    },
+    {
+      id: 105,
+      agent_id: 6,
+      agent_name: "Safari & Savannah Collective",
+      agent_type: "group",
+      title: "Great Serengeti & Masai Mara Big 5 Safari",
+      destination: "Masai Mara & Serengeti, Kenya",
+      category: "Wildlife Safari",
+      start_date: "2026-12-15",
+      duration_days: 8,
+      price: 2100,
+      currency: "USD",
+      max_capacity: 10,
+      enrolled_count: 6,
+      cover_image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80",
+      description: "Witness the Great Migration, sunrise hot air balloon flight over the Mara, and stay in luxury eco-tented wilderness camps."
+    },
+    {
+      id: 106,
+      agent_id: 4,
+      agent_name: "Nomad Trails Expeditions",
+      agent_type: "group",
+      title: "Royal Rajasthan Forts & Thar Desert Caravan",
+      destination: "Jaipur, Jodhpur & Jaisalmer, India",
+      category: "Cultural",
+      start_date: "2026-12-01",
+      duration_days: 8,
+      price: 780,
+      currency: "USD",
+      max_capacity: 16,
+      enrolled_count: 11,
+      cover_image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
+      description: "Private access to Mehrangarh Fort ramparts, dune camel treks, folk music around desert campfires, and royal haveli stays."
+    }
+  ];
+
+  // State Management
+  let allAgents = JSON.parse(localStorage.getItem('tv_registered_agents') || 'null') || defaultAgents;
+  let allTrips = JSON.parse(localStorage.getItem('tv_group_trips') || 'null') || defaultTrips;
+  let myEnrollments = JSON.parse(localStorage.getItem('tv_user_enrollments_' + currentUser.email) || '[]');
+  let activeTab = 'agents';
+  let activeAgentTypeFilter = 'all';
+
+  function saveState() {
+    localStorage.setItem('tv_registered_agents', JSON.stringify(allAgents));
+    localStorage.setItem('tv_group_trips', JSON.stringify(allTrips));
+    localStorage.setItem('tv_user_enrollments_' + currentUser.email, JSON.stringify(myEnrollments));
+    updateBadges();
+  }
+
+  function updateBadges() {
+    document.getElementById('count-agents').textContent = allAgents.length;
+    document.getElementById('count-trips').textContent = allTrips.length;
+    document.getElementById('count-enrolled').textContent = myEnrollments.length;
+  }
+
+  // TAB SWITCHER
+  function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+
+    document.getElementById('view-agents').style.display = tab === 'agents' ? 'grid' : 'none';
+    document.getElementById('view-trips').style.display = tab === 'trips' ? 'grid' : 'none';
+    document.getElementById('view-my-trips').style.display = tab === 'my-trips' ? 'block' : 'none';
+    
+    document.getElementById('agent-type-filters').style.display = tab === 'agents' ? 'flex' : 'none';
+
+    render();
+  }
+
+  function setAgentTypeFilter(type) {
+    activeAgentTypeFilter = type;
+    document.querySelectorAll('#agent-type-filters .filter-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.type === type);
+    });
+    renderAgents();
+  }
+
+  function handleFilterChange() {
+    if (activeTab === 'agents') renderAgents();
+    else if (activeTab === 'trips') renderTrips();
+  }
+
+  // RENDER AGENTS
+  function renderAgents() {
+    const query = document.getElementById('filter-search').value.toLowerCase().trim();
+    const container = document.getElementById('view-agents');
+
+    const filtered = allAgents.filter(a => {
+      const matchType = activeAgentTypeFilter === 'all' || a.agent_type === activeAgentTypeFilter;
+      const matchQuery = !query || 
+        (a.agent_name && a.agent_name.toLowerCase().includes(query)) ||
+        (a.agency_name && a.agency_name.toLowerCase().includes(query)) ||
+        (a.destinations && a.destinations.toLowerCase().includes(query)) ||
+        (a.specialty && a.specialty.toLowerCase().includes(query));
+      return matchType && matchQuery;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column:1/-1; text-align:center; padding:50px 20px; background:var(--card-cream); border-radius:16px; border:1px dashed var(--line);">
+          <div style="font-size:32px; margin-bottom:10px;">🔍</div>
+          <div style="font-family:'Fraunces', serif; font-size:18px; font-weight:700;">No travel agents found</div>
+          <p style="color:var(--ink-soft); font-size:13.5px;">Try adjusting your search or agent type filter.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtered.map(a => {
+      const isPerson = a.agent_type === 'person';
+      const badgeClass = isPerson ? 'badge-person' : 'badge-group';
+      const badgeIcon = isPerson ? '👤 Individual Guide' : '🏢 Travel Agency / Group';
+      const agentTrips = allTrips.filter(t => t.agent_id === a.id);
+
+      return `
+        <div class="agent-card">
+          <div class="agent-header">
+            <img src="${a.profile_pic || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}" class="agent-avatar-lg" alt="${a.agent_name}">
+            <div class="agent-meta">
+              <div class="agent-name-row">
+                <h3 class="agent-name" title="${a.agent_name}">${a.agent_name}</h3>
+                <span class="agent-type-badge ${badgeClass}">${badgeIcon}</span>
+              </div>
+              <div class="agency-title">${a.agency_name || (isPerson ? 'Private Expedition Leader' : 'Travel Agency')}</div>
+              <div class="agent-rating-row">
+                <span class="rating-score">★ ${Number(a.rating || 5.0).toFixed(2)}</span>
+                <span class="review-count">(${a.reviews_count || 12} reviews)</span>
+                <span style="color:var(--ink-soft); font-size:11px;">• ${a.experience_years || 5} yrs exp</span>
+              </div>
+            </div>
+          </div>
+          <div class="agent-body">
+            <p class="agent-bio">${a.bio || 'Experienced travel specialist offering custom journeys and group adventures.'}</p>
+            
+            <div>
+              <div style="font-size:11px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; margin-bottom:4px;">Specialty</div>
+              <div style="font-size:13px; font-weight:600; color:var(--ink);">${a.specialty}</div>
+            </div>
+
+            <div class="agent-details-tags">
+              <span class="detail-tag highlight">📍 ${a.destinations}</span>
+              <span class="detail-tag">🗣️ ${a.languages || 'English'}</span>
+              ${agentTrips.length > 0 ? `<span class="detail-tag" style="background:#E8F5E9; color:#2E7D32; font-weight:600;">🎒 ${agentTrips.length} Group Trips</span>` : ''}
+            </div>
+          </div>
+          <div class="agent-card-footer">
+            <button class="btn btn-outline" onclick="openContactModal(${a.id}, '${escapeQuotes(a.agent_name)}', '${a.email}')">
+              ✉️ Contact Agent
+            </button>
+            <button class="btn btn-primary" onclick="viewAgentTrips(${a.id})">
+              Explore Trips
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // RENDER GROUP TRIPS
+  function renderTrips(filterAgentId = null) {
+    const query = document.getElementById('filter-search').value.toLowerCase().trim();
+    const container = document.getElementById('view-trips');
+
+    const filtered = allTrips.filter(t => {
+      const matchAgent = filterAgentId ? t.agent_id === filterAgentId : true;
+      const matchQuery = !query ||
+        (t.title && t.title.toLowerCase().includes(query)) ||
+        (t.destination && t.destination.toLowerCase().includes(query)) ||
+        (t.category && t.category.toLowerCase().includes(query)) ||
+        (t.agent_name && t.agent_name.toLowerCase().includes(query));
+      return matchAgent && matchQuery;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column:1/-1; text-align:center; padding:50px 20px; background:var(--card-cream); border-radius:16px; border:1px dashed var(--line);">
+          <div style="font-size:32px; margin-bottom:10px;">🎒</div>
+          <div style="font-family:'Fraunces', serif; font-size:18px; font-weight:700;">No group trips found</div>
+          <p style="color:var(--ink-soft); font-size:13.5px;">No upcoming trips match this criteria. Check back soon or request a custom trip!</p>
+          <button class="btn btn-outline" style="margin-top:12px;" onclick="renderTrips(null)">View All Trips</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtered.map(t => {
+      const spotsLeft = Math.max(0, (t.max_capacity || 10) - (t.enrolled_count || 0));
+      const fillPercent = Math.min(100, Math.round(((t.enrolled_count || 0) / (t.max_capacity || 10)) * 100));
+      const isEnrolled = myEnrollments.some(e => e.trip_id === t.id);
+
+      return `
+        <div class="trip-card">
+          <div class="trip-thumb-wrap">
+            <img src="${t.cover_image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=700&q=80'}" class="trip-thumb" alt="${t.title}">
+            <div class="trip-category-pill">${t.category || 'Group Departure'}</div>
+            <div class="trip-price-pill">$${t.price} <span style="font-size:11px; font-weight:500;">/ person</span></div>
+          </div>
+          <div class="trip-body">
+            <div class="trip-host-bar">
+              <span class="trip-host-name">Hosted by <strong>${t.agent_name}</strong> (${t.agent_type === 'person' ? '👤 Guide' : '🏢 Agency'})</span>
+            </div>
+            <h3 class="trip-title">${t.title}</h3>
+            
+            <div class="trip-info-row">
+              <div class="trip-info-item">
+                <span class="trip-info-label">Destination</span>
+                <span class="trip-info-val">📍 ${t.destination}</span>
+              </div>
+              <div class="trip-info-item">
+                <span class="trip-info-label">Departure</span>
+                <span class="trip-info-val">🗓️ ${t.start_date} (${t.duration_days} Days)</span>
+              </div>
+            </div>
+
+            <p style="font-size:13px; color:var(--ink-soft); line-height:1.5; margin:0;">
+              ${t.description}
+            </p>
+
+            <div class="trip-spots-bar">
+              <div class="spots-text">
+                <span style="color:${spotsLeft <= 3 ? 'var(--accent-coral)' : '#2E7D32'};">${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} remaining</span>
+                <span style="color:var(--ink-soft);">${t.enrolled_count || 0} / ${t.max_capacity} Enrolled</span>
+              </div>
+              <div class="spots-progress">
+                <div class="spots-fill" style="width: ${fillPercent}%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="trip-card-footer">
+            <button class="btn btn-outline" onclick="contactAboutTrip(${t.id}, '${escapeQuotes(t.title)}', ${t.agent_id})">
+              💬 Inquire
+            </button>
+            ${isEnrolled ? `
+              <button class="btn btn-primary" style="background:#2E7D32; opacity:0.9;" disabled>
+                ✓ Enrolled
+              </button>
+            ` : spotsLeft === 0 ? `
+              <button class="btn btn-outline" disabled style="opacity:0.6;">
+                Trip Full
+              </button>
+            ` : `
+              <button class="btn btn-primary" onclick="openEnrollModal(${t.id})">
+                Enroll Now
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // RENDER USER ENROLLED TRIPS
+  function renderMyTrips() {
+    const container = document.getElementById('view-my-trips');
+    if (myEnrollments.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:60px 20px; background:var(--card-cream); border-radius:18px; border:1px dashed var(--line);">
+          <div style="font-size:40px; margin-bottom:12px;">🎟️</div>
+          <div style="font-family:'Fraunces', serif; font-size:20px; font-weight:700;">No enrolled group trips yet</div>
+          <p style="color:var(--ink-soft); font-size:14px; max-width:440px; margin:8px auto 20px;">
+            Explore trips hosted by certified guides and travel agencies. Enroll in seconds with instant booking reference.
+          </p>
+          <button class="btn btn-primary" onclick="switchTab('trips')">Browse Group Departures</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = myEnrollments.map(e => {
+      const trip = allTrips.find(t => t.id === e.trip_id) || {
+        title: e.trip_title || 'Group Tour',
+        destination: e.destination || 'Global',
+        start_date: e.start_date || 'Upcoming',
+        duration_days: e.duration_days || 7,
+        cover_image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
+        agent_name: e.agent_name || 'Travel Agent'
+      };
+
+      return `
+        <div class="enrollment-card">
+          <img src="${trip.cover_image}" class="enrollment-thumb" alt="${trip.title}">
+          <div class="enrollment-meta">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+              <span style="font-size:11.5px; font-weight:700; background:#E8F5E9; color:#2E7D32; padding:3px 8px; border-radius:6px;">CONFIRMED ENROLLMENT</span>
+              <span style="font-size:12px; font-family:'JetBrains Mono', monospace; color:var(--ink-soft);">${e.booking_code || 'TV-REF-8941'}</span>
+            </div>
+            <h3 style="font-family:'Fraunces', serif; font-size:18px; margin:0 0 6px; color:var(--ink);">${trip.title}</h3>
+            <div style="font-size:13px; color:var(--ink-soft);">
+              📍 ${trip.destination} • 🗓️ Departs ${trip.start_date} • 👥 ${e.seats} Seat(s) • Host: ${trip.agent_name}
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button class="btn btn-outline" onclick="contactAboutTrip(${trip.id}, '${escapeQuotes(trip.title)}', ${trip.agent_id})">Message Host</button>
+            <button class="btn btn-outline" style="color:var(--accent-coral);" onclick="cancelEnrollment('${e.booking_code}', ${e.trip_id}, ${e.seats})">Cancel Spot</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function render() {
+    updateBadges();
+    if (activeTab === 'agents') renderAgents();
+    else if (activeTab === 'trips') renderTrips();
+    else if (activeTab === 'my-trips') renderMyTrips();
+  }
+
+  function viewAgentTrips(agentId) {
+    switchTab('trips');
+    renderTrips(agentId);
+    showToast('success', 'Filtered Trips', 'Showing group departures for selected agent.');
+  }
+
+  // MODAL LOGIC
+  function openModal(id) { document.getElementById(id).classList.add('show'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+  function openRegisterAgentModal() { openModal('register-agent-modal'); }
+  function openCreateTripModal() { openModal('create-trip-modal'); }
+
+  function toggleAgentTypeForm(type) {
+    document.getElementById('label-type-person').classList.toggle('active', type === 'person');
+    document.getElementById('label-type-group').classList.toggle('active', type === 'group');
+    document.getElementById('reg-agency-group').style.display = type === 'group' ? 'block' : 'none';
+    document.getElementById('reg-name-label').textContent = type === 'group' ? 'Contact Person / Representative Name' : 'Your Full Name';
+  }
+
+  // CONTACT AGENT MODAL
+  function openContactModal(agentId, agentName, agentEmail) {
+    document.getElementById('contact-agent-id').value = agentId;
+    document.getElementById('contact-agent-email').value = agentEmail;
+    document.getElementById('contact-agent-name').value = agentName;
+    document.getElementById('contact-agent-subtitle').textContent = `Inquire with ${agentName} for trip details or bespoke itineraries.`;
+    openModal('contact-modal');
+  }
+
+  function contactAboutTrip(tripId, tripTitle, agentId) {
+    const trip = allTrips.find(t => t.id === tripId);
+    const agent = allAgents.find(a => a.id === agentId) || { agent_name: trip ? trip.agent_name : 'Agent', email: 'agent@travelverse.com' };
+    openContactModal(agentId, agent.agent_name, agent.email);
+    document.getElementById('contact-reason').value = 'group_trip';
+    document.getElementById('contact-dest').value = trip ? trip.destination : '';
+    document.getElementById('contact-msg').value = `Hi ${agent.agent_name}, I am interested in joining "${tripTitle}". Could you please share more details?`;
+  }
+
+  function openDirectChatFromModal() {
+    const email = document.getElementById('contact-agent-email').value;
+    const name = document.getElementById('contact-agent-name').value;
+    window.location.href = `chat.html?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`;
+  }
+
+  async function submitContactForm(e) {
+    e.preventDefault();
+    const agentName = document.getElementById('contact-agent-name').value;
+    const agentEmail = document.getElementById('contact-agent-email').value;
+    const dest = document.getElementById('contact-dest').value;
+    const msg = document.getElementById('contact-msg').value;
+
+    try {
+      await fetch(`${API_BASE}/send-buddy-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender_email: currentUser.email,
+          receiver_email: agentEmail,
+          message_text: `[Travel Inquiry for ${dest}]: ${msg}`,
+          msg_type: 'text'
+        })
+      });
+    } catch(err) {}
+
+    closeModal('contact-modal');
+    showToast('success', 'Inquiry Sent!', `Your inquiry has been delivered to ${agentName}. Check your Chat tab for responses!`);
+  }
+
+  // ENROLL MODAL
+  function openEnrollModal(tripId) {
+    const trip = allTrips.find(t => t.id === tripId);
+    if (!trip) return;
+
+    document.getElementById('enroll-trip-id').value = trip.id;
+    document.getElementById('enroll-trip-title').textContent = trip.title;
+    document.getElementById('enroll-trip-details').textContent = `📍 ${trip.destination} • 🗓️ ${trip.start_date} (${trip.duration_days} Days) • Hosted by ${trip.agent_name}`;
+    document.getElementById('enroll-trip-price').textContent = `$${trip.price} per person`;
+    document.getElementById('enroll-names').value = currentUser.name;
+    openModal('enroll-modal');
+  }
+
+  function updateEnrollTotal() {
+    const tripId = parseInt(document.getElementById('enroll-trip-id').value);
+    const trip = allTrips.find(t => t.id === tripId);
+    const seats = parseInt(document.getElementById('enroll-seats').value);
+    if (trip) {
+      document.getElementById('enroll-trip-price').textContent = `$${trip.price * seats} Total ($${trip.price} x ${seats})`;
+    }
+  }
+
+  function submitEnrollForm(e) {
+    e.preventDefault();
+    const tripId = parseInt(document.getElementById('enroll-trip-id').value);
+    const trip = allTrips.find(t => t.id === tripId);
+    if (!trip) return;
+
+    const seats = parseInt(document.getElementById('enroll-seats').value);
+    const bookingCode = `TV-TRIP-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    trip.enrolled_count = (trip.enrolled_count || 0) + seats;
+    
+    myEnrollments.unshift({
+      booking_code: bookingCode,
+      trip_id: trip.id,
+      trip_title: trip.title,
+      destination: trip.destination,
+      start_date: trip.start_date,
+      duration_days: trip.duration_days,
+      agent_name: trip.agent_name,
+      agent_id: trip.agent_id,
+      seats: seats,
+      booked_at: new Date().toISOString()
+    });
+
+    saveState();
+    closeModal('enroll-modal');
+    showToast('success', 'Enrolled Successfully!', `Booking Ref: ${bookingCode}. Welcome aboard!`);
+    switchTab('my-trips');
+  }
+
+  function cancelEnrollment(code, tripId, seats) {
+    if (!confirm('Are you sure you want to cancel your spot on this trip?')) return;
+    myEnrollments = myEnrollments.filter(e => e.booking_code !== code);
+    const trip = allTrips.find(t => t.id === tripId);
+    if (trip) {
+      trip.enrolled_count = Math.max(0, (trip.enrolled_count || 0) - seats);
+    }
+    saveState();
+    render();
+    showToast('error', 'Enrollment Cancelled', 'Your spot has been released.');
+  }
+
+  // REGISTER AGENT
+  function submitRegisterAgent(e) {
+    e.preventDefault();
+    const type = document.querySelector('input[name="reg-agent-type"]:checked').value;
+    const name = document.getElementById('reg-agent-name').value.trim();
+    const agency = document.getElementById('reg-agency-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim().toLowerCase();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const specialty = document.getElementById('reg-specialty').value.trim();
+    const destinations = document.getElementById('reg-destinations').value.trim();
+    const exp = parseInt(document.getElementById('reg-experience').value) || 3;
+    const languages = document.getElementById('reg-languages').value.trim() || 'English';
+    const bio = document.getElementById('reg-bio').value.trim();
+    const pic = document.getElementById('reg-pic').value.trim() || 
+      (type === 'person' 
+        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80' 
+        : 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80');
+
+    const newAgent = {
+      id: Date.now(),
+      agent_type: type,
+      agent_name: name,
+      agency_name: agency || (type === 'person' ? `${name}'s Expeditions` : `${name} Tours`),
+      email: email,
+      phone: phone,
+      rating: 5.0,
+      reviews_count: 1,
+      specialty: specialty,
+      destinations: destinations,
+      experience_years: exp,
+      languages: languages,
+      bio: bio,
+      profile_pic: pic,
+      badges: ['Verified Agent', type === 'person' ? 'Solo Guide' : 'Travel Agency']
+    };
+
+    allAgents.unshift(newAgent);
+    saveState();
+
+    // Sync with backend if available
+    fetch(`${API_BASE}/register-agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agency_name: newAgent.agency_name,
+        agent_name: newAgent.agent_name,
+        email: newAgent.email,
+        specialty: newAgent.specialty,
+        destinations: newAgent.destinations,
+        profile_pic: newAgent.profile_pic,
+        agent_type: newAgent.agent_type,
+        phone: newAgent.phone,
+        bio: newAgent.bio
+      })
+    }).catch(() => {});
+
+    closeModal('register-agent-modal');
+    showToast('success', 'Welcome, Agent!', 'Your agent profile is now published on TravelVerse.');
+    switchTab('agents');
+  }
+
+  // CREATE GROUP TRIP
+  function submitCreateTrip(e) {
+    e.preventDefault();
+    const title = document.getElementById('trip-title').value.trim();
+    const dest = document.getElementById('trip-dest').value.trim();
+    const category = document.getElementById('trip-category').value;
+    const start = document.getElementById('trip-start').value;
+    const duration = parseInt(document.getElementById('trip-duration').value) || 7;
+    const price = parseFloat(document.getElementById('trip-price').value) || 500;
+    const cap = parseInt(document.getElementById('trip-capacity').value) || 12;
+    const host = document.getElementById('trip-host').value.trim();
+    const img = document.getElementById('trip-image').value.trim() || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80';
+    const desc = document.getElementById('trip-desc').value.trim();
+
+    const newTrip = {
+      id: Date.now(),
+      agent_id: 1,
+      agent_name: host,
+      agent_type: "group",
+      title: title,
+      destination: dest,
+      category: category,
+      start_date: start,
+      duration_days: duration,
+      price: price,
+      currency: "USD",
+      max_capacity: cap,
+      enrolled_count: 0,
+      cover_image: img,
+      description: desc
+    };
+
+    allTrips.unshift(newTrip);
+    saveState();
+    closeModal('create-trip-modal');
+    showToast('success', 'Group Trip Published!', 'Travellers can now view and enroll in this departure.');
+    switchTab('trips');
+  }
+
+  function escapeQuotes(str) {
+    return (str || '').replace(/'/g, "\\'");
+  }
+
+  // INITIAL SYNC FROM BACKEND
+  async function syncFromBackend() {
+    try {
+      const res = await fetch(`${API_BASE}/agents`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.agents) && data.agents.length > 0) {
+          // Merge backend agents into state
+          data.agents.forEach(ba => {
+            if (!allAgents.some(a => a.email === ba.email)) {
+              allAgents.push(ba);
+            }
+          });
+          saveState();
+          render();
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Init
+  render();
+  syncFromBackend();
+</script>
+</body>
+</html>
+
